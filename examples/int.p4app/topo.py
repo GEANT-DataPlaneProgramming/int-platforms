@@ -26,9 +26,6 @@ from time import sleep
 import os
 import subprocess
 
-#import ddos_monitoring_controller as ddos_ctrl
-#import ddos_send
-
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 _THRIFT_BASE_PORT = 22222
 
@@ -141,9 +138,6 @@ def main():
 
     sleep(1)
     print "Ready !"
-
-    #ddos_ctrl.control_process()
-    #ddos_send.run_in_background()
 	
     CLI( net )
     net.stop()
