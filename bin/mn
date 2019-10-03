@@ -1,0 +1,4 @@
+#!/usr/bin/python
+# EASY-INSTALL-SCRIPT: 'mininet===2.3.0d4','mn'
+__requires__ = 'mininet===2.3.0d4'
+__import__('pkg_resources').run_script('mininet===2.3.0d4', 'mn')
