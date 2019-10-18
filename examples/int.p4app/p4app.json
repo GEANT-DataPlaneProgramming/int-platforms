@@ -1,6 +1,6 @@
 {
 	"program": "p4src/int.p4",
-	"language": "p4-14",
+	"language": "p4-16",
 	"targets": {
 		"custom": {
 			"program": "topo.py"

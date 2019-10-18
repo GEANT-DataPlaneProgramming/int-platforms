@@ -16,8 +16,10 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include "source/p4/top.p4"
-//#include "sink/p4/top.p4"
+//#include "sink/p4_16/top_16.p4"
+#include "source/p4_16/top_16.p4"
 
+//#include "source/p4_14/top.p4"
+//#include "source/p4_14/top.p4"
 
 
