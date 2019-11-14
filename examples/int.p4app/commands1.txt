@@ -1,7 +1,4 @@
-table_add tab_set_egress send_to_port 00:00:00:00:02:02&&&0xFFFFFFFF => 3 10
+table_add tab_set_egress send_to_port 00:00:00:00:02:02&&&0xFFFFFFFF => 2 10
 table_add tb_set_source int_set_source 1 =>
 table_add tb_int_source int_source_dscp 10.0.10.10&&&0xFFFFFFFF 10.0.2.2&&&0xFFFFFFFF 0x00FF&&&0xFFFF 0x00FF&&&0xFFFF => 4 2 0x03 10
 table_add tb_int_insert int_transit => 1
-table_add int_update_ipv4 int_update_ipv4_ac =>
-table_add int_update_udp int_update_udp_ac =>
-table_add int_update_shim int_update_shim_ac => 

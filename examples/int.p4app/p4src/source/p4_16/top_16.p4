@@ -196,16 +196,19 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         actions = {
             int_update_ipv4_ac;
         }
+		default_action = int_update_ipv4_ac();
     }
     @name(".int_update_shim") table int_update_shim {
         actions = {
             int_update_shim_ac;
         }
+		default_action = int_update_shim_ac();
     }
     @name(".int_update_udp") table int_update_udp {
         actions = {
             int_update_udp_ac;
         }
+		default_action = int_update_udp_ac();
     }
     @name(".tab_add_gtp_to_tcp") table tab_add_gtp_to_tcp {
         actions = {

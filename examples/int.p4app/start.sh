@@ -1,1 +1,1 @@
-p4app run examples/int.p4app
+p4app run p4app.json

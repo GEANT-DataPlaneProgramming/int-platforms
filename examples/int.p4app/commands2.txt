@@ -1,1 +1,2 @@
-
+table_add tab_set_egress send_to_port 00:00:00:00:02:02&&&0xFFFFFFFF => 1 10
+table_add tb_int_insert int_transit => 2
