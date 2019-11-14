@@ -89,6 +89,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     @name(".send_to_port") action send_to_port(bit<9> port) {
         standard_metadata.egress_port = port;
+		standard_metadata.egress_spec = port;
     }
     @name(".int_transit") action int_transit(bit<32> switch_id) {
         meta.int_meta.switch_id = switch_id;
@@ -294,36 +295,36 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         size = 255;
     }
     apply @core_identification("Netcope-P4-INT-source-2.0") {
-        tab_set_egress.apply();
+		tab_set_egress.apply();
         tb_set_source.apply();
         tb_set_sink.apply();
         if (hdr.udp.isValid() || hdr.tcp.isValid()) {
             if (meta.int_meta.source == 1w1) {
-                tb_int_source.apply();
-            }
+				tb_int_source.apply();
+			}
             if (hdr.int_header.isValid()) {
-                tb_int_insert.apply();
-                tb_int_inst_0003.apply();
-                tb_int_inst_0407.apply();
-                if (hdr.ipv4.isValid()) {
-                    int_update_ipv4.apply();
-                }
-                if (hdr.udp.isValid()) {
-                    int_update_udp.apply();
-                }
-                if (hdr.int_shim.isValid()) {
-                    int_update_shim.apply();
-                }
-            }
-        }
-        if (!hdr.gtp.isValid()) {
-            if (hdr.udp.isValid()) {
-                tab_add_gtp_to_udp.apply();
-            }
-            if (hdr.tcp.isValid()) {
-                tab_add_gtp_to_tcp.apply();
-            }
-        }
+                  tb_int_insert.apply();
+                  tb_int_inst_0003.apply();
+                  tb_int_inst_0407.apply();
+                  if (hdr.ipv4.isValid()) {
+                      int_update_ipv4.apply();
+                 }
+                  if (hdr.udp.isValid()) {
+                      int_update_udp.apply();
+                  }
+                  if (hdr.int_shim.isValid()) {
+                      int_update_shim.apply();
+                  }
+              }
+          }
+          if (!hdr.gtp.isValid()) {
+			if (hdr.udp.isValid()) {
+                  tab_add_gtp_to_udp.apply();
+			}
+			if (hdr.tcp.isValid()) {
+				tab_add_gtp_to_tcp.apply();
+			}
+		}
     }
 }
 
