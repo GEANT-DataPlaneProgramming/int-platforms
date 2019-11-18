@@ -6,7 +6,7 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         meta.int_metadata.int_hdr_word_len = (bit<8>) hdr.int_header.hop_metadata_len;
         meta.layer34_metadata.l3_mtu = l3_mtu;
     }
-    @name(".tb_int_insert") table tb_int_insert {
+    @name(".tb_int_transit") table tb_int_transit {
         actions = {
             configure_transit;
         }
@@ -161,7 +161,7 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
 
         int_hop_cnt_decrement();
 
-        tb_int_insert.apply();
+        tb_int_transit.apply();
         tb_int_inst_0003.apply();
         tb_int_inst_0407.apply();
         

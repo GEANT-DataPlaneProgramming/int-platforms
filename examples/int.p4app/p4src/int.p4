@@ -15,6 +15,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <core.p4>
+#include <v1model.p4>
+
 #include "include/headers.p4"
 #include "include/parser.p4"
 #include "include/int_source.p4"

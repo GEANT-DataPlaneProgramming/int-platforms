@@ -1,2 +1,2 @@
-table_add tb_int_insert configure_transit => 3 1500
+table_add tb_int_transit configure_transit => 3 1500
 table_add tb_forward send_to_port 00:00:00:00:02:02&&&0xFFFFFFFF => 3 10

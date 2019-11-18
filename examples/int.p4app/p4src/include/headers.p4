@@ -1,6 +1,3 @@
-//#include <core.p4>
-//#include <v1model.p4>
-
 #ifndef _HEADERS_P4_
 #define _HEADERS_P4_
 

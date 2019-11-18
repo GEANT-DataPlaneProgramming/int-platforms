@@ -1,6 +1,3 @@
-#include <core.p4>
-#include <v1model.p4>
-
 parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
     @name(".parse_enc_ipv4") state parse_enc_ipv4 {
