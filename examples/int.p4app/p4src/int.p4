@@ -15,11 +15,40 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include "include/headers.p4"
+#include "include/parser.p4"
+#include "include/int_source.p4"
+#include "include/int_transit.p4"
+#include "include/int_sink.p4"
+#include "include/gtp.p4"
+#include "include/forward.p4"
 
-//#include "sink/p4_16/top_16.p4"
-#include "source/p4_16/top_16.p4"
 
-//#include "source/p4_14/top.p4"
-//#include "source/p4_14/top.p4"
+control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+	
+	Int_source() int_source;
+	Int_transit() int_transit;
+	Int_sink() int_sink;
+	
+	Gtp_tunnel() gtp;
+	Forward() forward;
+	
+	apply {	
+		
+		if (!hdr.udp.isValid() && !hdr.tcp.isValid())
+			exit;
+			
+		int_source.apply(hdr, meta, standard_metadata);
+		int_transit.apply(hdr, meta, standard_metadata);
+		int_sink.apply(hdr, meta, standard_metadata);
+		
+		gtp.apply(hdr, meta, standard_metadata);
+		
+		forward.apply(hdr, meta, standard_metadata);
+	}
+}
+
+V1Switch(ParserImpl(), verifyChecksum(), ingress(), egress(), computeChecksum(), DeparserImpl()) main;
+
 
 
