@@ -61,7 +61,7 @@ header intl4_shim_t {
     bit<8> rsvd1;
     bit<8> len;
     bit<6> dscp;
-	bit<2> rsvd2;
+    bit<2> rsvd2;
 }
 
 header int_header_t {
@@ -69,9 +69,9 @@ header int_header_t {
     bit<2> rep;
     bit<1> c;
     bit<1> e;
-	bit<1> m;
+    bit<1> m;
     bit<7> rsvd1;
-	bit<3> rsvd2;
+    bit<3> rsvd2;
     bit<5> hop_metadata_len;
     bit<8> remaining_hop_cnt;
     bit<16> instruction_mask;
@@ -118,7 +118,7 @@ struct int_metadata_t {
     bit<1>  sink;
     bit<32> switch_id;
     bit<16>  insert_byte_cnt;
-	bit<8> int_hdr_word_len;
+    bit<8> int_hdr_word_len;
 }
 
 struct intrinsic_metadata_t {
@@ -132,8 +132,8 @@ struct layer34_metadata_t {
     bit<16> l4_src;
     bit<16> l4_dst;
     bit<8>  l4_proto;
-	bit<16> l3_mtu;
-	bit<6>  dscp;
+    bit<16> l3_mtu;
+    bit<6>  dscp;
 }
 
 
@@ -150,13 +150,12 @@ struct metadata {
 struct headers {
     @name(".ethernet") 
     ethernet_t                ethernet;
-	@name(".ipv4") 
+    @name(".ipv4") 
     ipv4_t                    ipv4;
     @name(".tcp") 
     tcp_t                     tcp;
     @name(".udp") 
     udp_t                     udp;
-	
 
     @name(".enc_ipv4") 
     ipv4_t                    enc_ipv4;
@@ -166,9 +165,9 @@ struct headers {
     @name(".gtp") 
     gtp_start_t               gtp;
 
-	@name(".int_shim") 
+    @name(".int_shim") 
     intl4_shim_t              int_shim;
-	@name(".int_header") 
+    @name(".int_header") 
     int_header_t         int_header;
 
     @name(".int_egress_port_tx_util") 

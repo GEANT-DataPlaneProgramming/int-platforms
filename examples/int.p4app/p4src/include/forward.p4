@@ -8,10 +8,10 @@ control Forward(inout headers hdr, inout metadata meta, inout standard_metadata_
     }
     @name(".send_to_port") action send_to_port(bit<9> port) {
         standard_metadata.egress_port = port;
-		standard_metadata.egress_spec = port;
+        standard_metadata.egress_spec = port;
     }
-	
-	@name(".tb_forward") table tb_forward {
+
+    @name(".tb_forward") table tb_forward {
         actions = {
             send_to_cpu;
             send_to_eth;
@@ -22,8 +22,8 @@ control Forward(inout headers hdr, inout metadata meta, inout standard_metadata_
         }
         size = 31;
     }
-	
-	apply {
-		tb_forward.apply();
-	}
+
+    apply {
+        tb_forward.apply();
+    }
 }

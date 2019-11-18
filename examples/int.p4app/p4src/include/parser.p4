@@ -34,7 +34,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
     }
     @name(".parse_int_header") state parse_int_header {
         packet.extract(hdr.int_header);
-		transition accept;
+        transition accept;
     }
     @name(".parse_int_shim") state parse_int_shim {
         packet.extract(hdr.int_shim);
@@ -61,7 +61,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
             default: accept;
         }
     }
-	@name(".parse_ipv4") state parse_ipv4 {
+    @name(".parse_ipv4") state parse_ipv4 {
         packet.extract(hdr.ipv4);
         meta.layer34_metadata.ip_src = hdr.ipv4.srcAddr;
         meta.layer34_metadata.ip_dst = hdr.ipv4.dstAddr;
@@ -74,7 +74,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
         }
     }
 
-	@name(".parse_ethernet") state parse_ethernet {
+    @name(".parse_ethernet") state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             16w0x800: parse_ipv4;

@@ -1,6 +1,6 @@
 control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
-	@name(".add_gtp") action add_gtp() {
+    @name(".add_gtp") action add_gtp() {
         hdr.gtp.setValid();
         hdr.gtp.version = 3w1;
         hdr.gtp.protType = 1w0;
@@ -64,8 +64,8 @@ control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metada
         hdr.enc_udp.csum = hdr.udp.csum;
         add_gtp_set_new_outer(srcAddr, dstAddr);
     }
-	
-	@name(".tab_add_gtp_to_tcp") table tab_add_gtp_to_tcp {
+
+    @name(".tab_add_gtp_to_tcp") table tab_add_gtp_to_tcp {
         actions = {
             add_gtp_to_tcp;
         }
@@ -75,14 +75,14 @@ control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metada
             add_gtp_to_udp;
         }
     }
-	
-	apply {
-		if (hdr.gtp.isValid()) {
-			if (hdr.udp.isValid()) 
-				  tab_add_gtp_to_udp.apply();
 
-			if (hdr.tcp.isValid())
-				tab_add_gtp_to_tcp.apply();
-		}
-	}
+    apply {
+        if (hdr.gtp.isValid()) {
+            if (hdr.udp.isValid()) 
+                  tab_add_gtp_to_udp.apply();
+
+            if (hdr.tcp.isValid())
+                tab_add_gtp_to_tcp.apply();
+        }
+    }
 }
