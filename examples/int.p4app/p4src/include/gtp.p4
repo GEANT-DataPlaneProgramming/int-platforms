@@ -1,6 +1,22 @@
+/*
+ * Copyright 2017-present Open Networking Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
-    @name(".add_gtp") action add_gtp() {
+    action add_gtp() {
         hdr.gtp.setValid();
         hdr.gtp.version = 3w1;
         hdr.gtp.protType = 1w0;
@@ -10,7 +26,7 @@ control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metada
         hdr.gtp.messageLen = 16w0;
         hdr.gtp.teid = 32w0;
     }
-    @name(".add_gtp_add_ipv4") action add_gtp_add_ipv4() {
+    action add_gtp_add_ipv4() {
         hdr.enc_ipv4.setValid();
         hdr.enc_ipv4.version = hdr.ipv4.version;
         hdr.enc_ipv4.ihl = hdr.ipv4.ihl;
@@ -26,7 +42,7 @@ control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metada
         hdr.enc_ipv4.srcAddr = hdr.ipv4.srcAddr;
         hdr.enc_ipv4.dstAddr = hdr.ipv4.dstAddr;
     }
-    @name(".add_gtp_set_new_outer") action add_gtp_set_new_outer(bit<32> srcAddr, bit<32> dstAddr) {
+    action add_gtp_set_new_outer(bit<32> srcAddr, bit<32> dstAddr) {
         hdr.ipv4.protocol = 8w0x11;
         hdr.ipv4.version = 4w4;
         hdr.ipv4.ihl = 4w5;
@@ -46,7 +62,7 @@ control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metada
         hdr.udp.len = hdr.udp.len + 16w36;
         hdr.udp.csum = 16w0;
     }
-    @name(".add_gtp_to_tcp") action add_gtp_to_tcp(bit<32> srcAddr, bit<32> dstAddr) {
+    action add_gtp_to_tcp(bit<32> srcAddr, bit<32> dstAddr) {
         add_gtp();
         add_gtp_add_ipv4();
         hdr.udp.len = 16w0;
@@ -54,7 +70,7 @@ control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metada
         hdr.udp.len = hdr.udp.len + hdr.enc_ipv4.totalLen;
         hdr.udp.len = hdr.udp.len - 16w20;
     }
-    @name(".add_gtp_to_udp") action add_gtp_to_udp(bit<32> srcAddr, bit<32> dstAddr) {
+    action add_gtp_to_udp(bit<32> srcAddr, bit<32> dstAddr) {
         add_gtp();
         add_gtp_add_ipv4();
         hdr.enc_udp.setValid();
@@ -65,12 +81,12 @@ control Gtp_tunnel(inout headers hdr, inout metadata meta, inout standard_metada
         add_gtp_set_new_outer(srcAddr, dstAddr);
     }
 
-    @name(".tab_add_gtp_to_tcp") table tab_add_gtp_to_tcp {
+    table tab_add_gtp_to_tcp {
         actions = {
             add_gtp_to_tcp;
         }
     }
-    @name(".tab_add_gtp_to_udp") table tab_add_gtp_to_udp {
+    table tab_add_gtp_to_udp {
         actions = {
             add_gtp_to_udp;
         }

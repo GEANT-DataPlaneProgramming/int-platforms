@@ -1,6 +1,23 @@
+/*
+ * Copyright 2017-present Open Networking Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+ 
 parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
-    @name(".parse_enc_ipv4") state parse_enc_ipv4 {
+    state parse_enc_ipv4 {
         packet.extract(hdr.enc_ipv4);
         meta.layer34_metadata.ip_src = hdr.enc_ipv4.srcAddr;
         meta.layer34_metadata.ip_dst = hdr.enc_ipv4.dstAddr;
@@ -12,7 +29,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
             default: accept;
         }
     }
-    @name(".parse_enc_udp") state parse_enc_udp {
+    state parse_enc_udp {
         packet.extract(hdr.enc_udp);
         meta.layer34_metadata.l4_src = hdr.enc_udp.srcPort;
         meta.layer34_metadata.l4_dst = hdr.enc_udp.dstPort;
@@ -22,22 +39,22 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
             default: accept;
         }
     }
-    @name(".parse_gtp") state parse_gtp {
+    state parse_gtp {
         packet.extract(hdr.gtp);
         transition select((packet.lookahead<bit<4>>())[3:0]) {
             4w4: parse_enc_ipv4;
             default: accept;
         }
     }
-    @name(".parse_int_header") state parse_int_header {
+    state parse_int_header {
         packet.extract(hdr.int_header);
         transition accept;
     }
-    @name(".parse_int_shim") state parse_int_shim {
+    state parse_int_shim {
         packet.extract(hdr.int_shim);
         transition parse_int_header;
     }
-    @name(".parse_tcp") state parse_tcp {
+    state parse_tcp {
         packet.extract(hdr.tcp);
         meta.layer34_metadata.l4_src = hdr.tcp.srcPort;
         meta.layer34_metadata.l4_dst = hdr.tcp.dstPort;
@@ -47,7 +64,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
             default: accept;
         }
     }
-    @name(".parse_udp") state parse_udp {
+    state parse_udp {
         packet.extract(hdr.udp);
         meta.layer34_metadata.l4_src = hdr.udp.srcPort;
         meta.layer34_metadata.l4_dst = hdr.udp.dstPort;
@@ -58,7 +75,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
             default: accept;
         }
     }
-    @name(".parse_ipv4") state parse_ipv4 {
+    state parse_ipv4 {
         packet.extract(hdr.ipv4);
         meta.layer34_metadata.ip_src = hdr.ipv4.srcAddr;
         meta.layer34_metadata.ip_dst = hdr.ipv4.dstAddr;
@@ -70,15 +87,14 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
             default: accept;
         }
     }
-
-    @name(".parse_ethernet") state parse_ethernet {
+    state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             16w0x800: parse_ipv4;
             default: accept;
         }
     }
-    @name(".start") state start {
+    state start {
         transition parse_ethernet;
     }
 }

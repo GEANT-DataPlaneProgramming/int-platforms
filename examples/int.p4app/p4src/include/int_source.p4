@@ -1,6 +1,22 @@
+/*
+ * Copyright 2017-present Open Networking Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 control Int_source(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
-    @name(".configure_source") action configure_source(bit<8> max_hop, bit<5> ins_cnt, bit<16> ins_mask) {
+    action configure_source(bit<8> max_hop, bit<5> ins_cnt, bit<16> ins_mask) {
         hdr.int_shim.setValid();
         hdr.int_shim.int_type = 8w1;
         hdr.int_shim.len = 8w4;
@@ -22,7 +38,7 @@ control Int_source(inout headers hdr, inout metadata meta, inout standard_metada
         hdr.udp.len = hdr.udp.len + 16w12;
 
     }
-    @name(".tb_int_source") table tb_int_source {
+    table tb_int_source {
         actions = {
             configure_source;
         }
@@ -35,10 +51,10 @@ control Int_source(inout headers hdr, inout metadata meta, inout standard_metada
         size = 127;
     }
 
-    @name(".activate_source") action activate_source() {
+    action activate_source() {
         meta.int_metadata.source = 1w1;
     }
-    @name(".tb_activate_source") table tb_activate_source {
+    table tb_activate_source {
         actions = {
             activate_source;
         }

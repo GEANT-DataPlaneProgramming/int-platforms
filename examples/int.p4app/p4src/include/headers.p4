@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017-present Open Networking Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 #ifndef _HEADERS_P4_
 #define _HEADERS_P4_
 
@@ -135,55 +151,34 @@ struct layer34_metadata_t {
 
 
 struct metadata {
-    @name(".int_metadata") 
     int_metadata_t  int_metadata;
-    @name(".intrinsic_metadata") 
     intrinsic_metadata_t intrinsic_metadata;
-    @name(".layer34_metadata") 
     layer34_metadata_t   layer34_metadata;
 }
 
 
 struct headers {
-    @name(".ethernet") 
     ethernet_t                ethernet;
-    @name(".ipv4") 
     ipv4_t                    ipv4;
-    @name(".tcp") 
     tcp_t                     tcp;
-    @name(".udp") 
     udp_t                     udp;
 
-    @name(".enc_ipv4") 
     ipv4_t                    enc_ipv4;
-    @name(".enc_udp") 
     udp_t                     enc_udp;
 
-    @name(".gtp") 
     gtp_start_t               gtp;
 
-    @name(".int_shim") 
-    intl4_shim_t              int_shim;
-    @name(".int_header") 
+    intl4_shim_t          int_shim;
     int_header_t         int_header;
 
-    @name(".int_egress_port_tx_util") 
-    int_egress_port_tx_util_t int_egress_port_tx_util;
-    @name(".int_egress_tstamp") 
-    int_egress_tstamp_t       int_egress_tstamp;
-    @name(".int_hop_latency") 
-    int_hop_latency_t         int_hop_latency;
-    @name(".int_ingress_tstamp") 
-    int_ingress_tstamp_t      int_ingress_tstamp;
-
-    @name(".int_port_ids") 
-    int_port_ids_t            int_port_ids; 	
-    @name(".int_q_congestion") 
-    int_q_congestion_t        int_q_congestion;
-    @name(".int_q_occupancy") 
-    int_q_occupancy_t         int_q_occupancy;
-    @name(".int_switch_id") 
-    int_switch_id_t           int_switch_id;
+    int_egress_port_tx_util_t  int_egress_port_tx_util;
+    int_egress_tstamp_t         int_egress_tstamp;
+    int_hop_latency_t             int_hop_latency;
+    int_ingress_tstamp_t        int_ingress_tstamp;
+    int_port_ids_t                  int_port_ids; 
+    int_q_congestion_t           int_q_congestion;
+    int_q_occupancy_t           int_q_occupancy;
+    int_switch_id_t                int_switch_id;
 }
 
 
