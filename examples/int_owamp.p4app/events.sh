@@ -1,0 +1,1 @@
+python /usr/local/lib/python2.7/dist-packages/nanomsg_client.py --thrift-port 22222
