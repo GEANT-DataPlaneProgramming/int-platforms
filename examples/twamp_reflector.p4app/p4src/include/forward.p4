@@ -16,17 +16,21 @@
  
 control Forward(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
-    action send_to_cpu(bit<9> port) {
-        standard_metadata.egress_spec = port;
+    action send_to_cpu() {
+        standard_metadata.egress_port = 9w128;
+    }
+    action send_to_eth() {
+        standard_metadata.egress_port = 9w0;
     }
     action send_to_port(bit<9> port) {
-        //standard_metadata.egress_port = port;
+        standard_metadata.egress_port = port;
         standard_metadata.egress_spec = port;
     }
 
     table tb_forward {
         actions = {
             send_to_cpu;
+            send_to_eth;
             send_to_port;
         }
         key = {

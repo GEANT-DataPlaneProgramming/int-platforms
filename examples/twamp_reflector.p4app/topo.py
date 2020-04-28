@@ -27,8 +27,14 @@ import argparse
 from time import sleep
 import os
 import subprocess
+import threading
 import re
 import sys
+
+os.system('dpkg -i /tmp/python3-six_1.10.0-3_all.deb')
+os.system('tar -xvzf /tmp/construct-2.9.45.tar.gz')
+os.system('cd /tmp/construct-2.9.45 && python3 setup.py install')
+#from twamp_server import start_twamp_server
 
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 _THRIFT_BASE_PORT = 22222
@@ -56,7 +62,7 @@ class MyTopo(Topo):
                             enable_debugger = True)
 
         for h in xrange(nb_hosts):
-            self.addHost('h%d' % (h + 1), ip="10.0.%d.%d" % ((h + 1) , (h + 1)),
+            self.addHost('h%d' % (h + 1), ip="10.0.%d.%d" % ((h + 1),(h + 1)),
                     mac="00:00:00:00:0%d:0%d" % ((h+1), (h+1)))
 
         for a, b in links:
@@ -104,7 +110,56 @@ def checkIntf( intf ):
     #~ if ips:
         #~ print 'Error:', intf, 'has an IP address, and is probably in use!\n' 
         #~ exit(1)
+        
+def checkIntf( intf ):
+    "Make sure intf exists and is not configured."
+    quietRun( 'ifconfig %s 0 0.0.0.0 2>/dev/null' % intf, shell=True )
+    config = quietRun( 'ifconfig %s 2>/dev/null' % intf, shell=True )
+    #config = quietRun( 'ifconfig 2>/dev/null', shell=True )
+    if not config:
+        print 'Error:', intf, 'does not exist!\n' 
+        exit(1)
+    ips = re.findall( r'\d+\.\d+\.\d+\.\d+', config )
+    #~ if ips:
+        #~ print 'Error:', intf, 'has an IP address, and is probably in use!\n' 
+        #~ exit(1)
+        
+def create_link_to_external_interface(switch, external_interface_name):
+    checkIntf(external_interface_name)
+    print  '*** Adding hardware interface', external_interface_name, 'to switch', switch.name, '\n'
+    _intf = Intf(external_interface_name, node=switch)
 
+    
+def create_dp_cpu_link(switch, cpu_mac, cpu_ip):
+    quietRun( 'ip link add name veth_dp type veth peer name veth_cpu', shell=True )
+    quietRun( 'ip netns add ns1', shell=True )
+    quietRun( 'sudo ip link set veth_cpu netns ns1', shell=True )
+    quietRun( 'ip netns exec ns1 ifconfig veth_cpu hw ether %s' % cpu_mac, shell=True )
+    quietRun( 'ifconfig veth_dp hw ether f6:61:c0:6a:00:77', shell=True )
+    quietRun( 'ip link set dev veth_dp up', shell=True )
+    quietRun( 'ip netns exec ns1 ip link set dev veth_cpu up', shell=True )
+    for off in "rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash".split(' '):
+        quietRun( '/sbin/ethtool --offload veth_dp %s off' % off, shell=True )
+        quietRun( 'ip netns exec ns1 /sbin/ethtool --offload veth_cpu %s off' % off, shell=True )
+    quietRun( 'ip netns exec ns1 ifconfig veth_cpu %s/24' % cpu_ip, shell=True )
+    
+    quietRun( 'ip netns exec ns1 ip route add default via %s' % cpu_ip, shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.all.disable_ipv6=1', shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.default.disable_ipv6=1', shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.lo.disable_ipv6=1', shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv4.tcp_congestion_control=reno', shell=True )
+    
+    print  '*** Adding hardware interface', 'veth_dp', 'to switch', switch.name, '\n'
+    _intf = Intf('veth_dp', node=switch) 
+    
+def run_twamp_server():
+    os.system('ip netns exec ns1 python3 twamp_server.py')
+
+def start_twamp_server():
+    thread = threading.Thread(target=run_twamp_server)
+    thread.daemon = True
+    thread.start()
+        
 def main():
     nb_hosts, nb_switches, links = read_topo()
     topo = MyTopo(args.behavioral_exe,
@@ -117,13 +172,8 @@ def main():
                   controller = None,
                   autoStaticArp=True)
     
-    intfName = 'eth1'
-    checkIntf(intfName)
-    
-    print net.switches
-    switch = net.switches[0]
-    print  '*** Adding hardware interface', intfName, 'to switch', switch.name, '\n'
-    _intf = Intf( intfName, node=switch )
+    create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
+    create_dp_cpu_link(switch=net.switches[0], cpu_mac ='f6:61:c0:6a:14:66', cpu_ip='10.0.0.254')
 
     net.start()
 
@@ -163,6 +213,7 @@ def main():
         s.cmd("iptables -I OUTPUT -p icmp --icmp-type destination-unreachable -j DROP")
 
     sleep(1)
+    start_twamp_server()
     print "Ready !"
 
     CLI( net )

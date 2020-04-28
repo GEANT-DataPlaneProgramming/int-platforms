@@ -16,7 +16,6 @@
 P4APP_IMAGE=${P4APP_IMAGE:-dingdamu/p4app-ddos:latest}
 P4APP_CONTAINER_ARGS=${P4APP_CONTAINER_ARGS:-""}
 
-
 myrealpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
@@ -52,13 +51,24 @@ function build-command {
 function run-p4app {
   APP_TO_RUN=/tmp/app.tar.gz
   P4APP_NAME='hh'
-  docker run --privileged --interactive  -i --tty --rm \
+  docker create --privileged --interactive  -i --tty --rm \
             --name "$P4APP_NAME" \
             -v $1:$APP_TO_RUN \
             -e DISPLAY=$DISPLAY \
             -v "$P4APP_LOGDIR":/tmp/p4app_logs \
+            -v "/tmp/p4app_logs2":/tmp/p4app_logs2 \
              $P4APP_CONTAINER_ARGS \
              $P4APP_IMAGE $APP_TO_RUN "${@:2}"
+  docker network connect macvlan70 "$P4APP_NAME" 
+  docker start --interactive  "$P4APP_NAME" 
+  
+  #~ docker run --privileged --interactive  -i --tty --rm \
+            #~ --name "$P4APP_NAME" \
+            #~ -v $1:$APP_TO_RUN \
+            #~ -e DISPLAY=$DISPLAY \
+            #~ -v "$P4APP_LOGDIR":/tmp/p4app_logs \
+             #~ $P4APP_CONTAINER_ARGS \
+             #~ $P4APP_IMAGE $APP_TO_RUN "${@:2}"
          }
 
 function run-command {
@@ -162,6 +172,7 @@ function usage-command {
   echo "      Execute a command on the most recent p4app instance."
   exit 1
 }
+
 
 case "$1" in
   "run")

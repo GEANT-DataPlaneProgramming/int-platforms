@@ -1,0 +1,19 @@
+{
+	"program": "p4src/main.p4",
+	"language": "p4-16",
+	"targets": {
+		"custom": {
+			"program": "topo.py"
+		},
+		"multiswitch": {
+			"links": [["h1", "s1"], ["s1", "s2"], ["s2", "h2", 50]],
+			"hosts": {
+				"h1": {
+					"startup_sleep": 0.2,
+					"wait": true
+				}
+			}
+		}
+	}
+}
+
