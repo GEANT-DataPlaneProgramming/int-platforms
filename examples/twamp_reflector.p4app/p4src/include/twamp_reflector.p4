@@ -18,11 +18,11 @@
 control TwampReflector(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
     action configure_reflector(bit<32> senderAddr, bit<16> senderPort, bit<32> receiverAddr, bit<16> receiverPort,  bit<32> dscp) {
-        meta.twamp_metadata.senderAddr = senderAddr;
-        meta.twamp_metadata.senderPort = senderPort;
-        meta.twamp_metadata.receiverAddr = receiverAddr;
-        meta.twamp_metadata.receiverPort = receiverPort;
-        meta.twamp_metadata.dscp = dscp;
+        meta.twamp.senderAddr = senderAddr;
+        meta.twamp.senderPort = senderPort;
+        meta.twamp.receiverAddr = receiverAddr;
+        meta.twamp.receiverPort = receiverPort;
+        meta.twamp.dscp = dscp;
     }
     table tb_configure_reflector {
         actions = {
@@ -31,10 +31,12 @@ control TwampReflector(inout headers hdr, inout metadata meta, inout standard_me
     }
     
     action bmv2timestamp_to_ntp(in bit<48> timestamp, out bit<64> ntp) {
+        // converts bmv2 timestamp (number of miliseconds from bmv2 start to NTP timestamp
+        // TODO: configure number of seconds from 1900 to bmv2 start
         bit<32> seconds = (bit<32>) (timestamp >> 10);  //simplication (divide by 1024 instead of 1000)
         bit<32> miliseconds = (bit<32>) (timestamp & 0x400); //simplication (modulo by 1024 instead of 1000)
         ntp = (bit<64>)seconds<<32;
-        ntp = ntp + (bit<64>)miliseconds;  // TODO: convert miliseconds to fraction of a second (a float value)
+        ntp = ntp + (bit<64>)0;  // TODO: convert miliseconds to fraction of a second (a float value)
     }
     
     action twamp_reflect() {

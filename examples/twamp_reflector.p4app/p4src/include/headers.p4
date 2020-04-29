@@ -125,14 +125,6 @@ header twamp_test_t {
     //padding
 }
 
-//additional header added to the packet before being sent to the controller
-header cpu_header_t {
-    bit<64> preamble;
-    bit<8>  device;
-    bit<8>  reason;
-    bit<8>  port;
-}
-
 struct headers {
     ethernet_t              ethernet;
     arp_t                      arp;
@@ -140,11 +132,10 @@ struct headers {
     tcp_t                      tcp;
     udp_t                     udp;
     twamp_test_t         twamp_test;
-    cpu_header_t         cpu_header;
 }
 
 
-header meta_t {
+header checksum_metadata_t {
     bit<16> L4Length;
 }
 
@@ -156,9 +147,17 @@ header twamp_metadata_t {
     bit<32> dscp;
 }
 
+header loopback_metadata_t {
+    bit<32> cpu_ip;       // IP address of CPU veth endpoint
+    bit<48> cpu_mac;    // MAC address of CPU veth endpoint
+    bit<9> cpu_port;      // port id of bmv2 veth endpoint
+    bit<48> dp_mac;     // MAC address of bmv2 veth endpoint
+}
+
 struct metadata {
-    twamp_metadata_t twamp_metadata;
-    meta_t meta;
+    twamp_metadata_t twamp;
+    checksum_metadata_t checksum;
+    loopback_metadata_t loopback;
 }
 
 #endif

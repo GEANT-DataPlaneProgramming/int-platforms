@@ -30,48 +30,31 @@ const bit<48> BROADCAST_MAC = 0xFFFFFFFFFFFF;
 
 control Loopback(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
-    action send_frame_to_cpu(bit<9> port, bit<48> dp_mac) {
-        // decided not to use CPU header in order to enable default linux networking stack behaviour 
-        // for a packet within CPU host (e.g.: TCP handshake procedure).
-        
-        // CPU header stores a local port id from where packet was received in order to know where send a frame response
-        //hdr.cpu_header.setValid();
-        //hdr.cpu_header.preamble = 64w0;
-        //hdr.cpu_header.device = 8w0;
-        //hdr.cpu_header.reason = 8w0xab;
-        //hdr.cpu_header.port = (bit<8>)standard_metadata.ingress_port;
-        
-        standard_metadata.egress_spec = port;
-        
+    action configure_loopback(bit<32> cpu_ip, bit<48> cpu_mac, bit<9> cpu_port, bit<48> dp_mac) {
+        meta.loopback.cpu_ip = cpu_ip;
+        meta.loopback.cpu_mac = cpu_mac;
+        meta.loopback.cpu_port = cpu_port;
+        meta.loopback.dp_mac = dp_mac;
+    }
+    
+    table tb_configure_loopback {
+        actions = {
+            configure_loopback;
+        }
+        const default_action = configure_loopback(CPU_IP, CPU_MAC, CPU_PORT, DP_MAC);
+    }
+    
+    action send_frame_to_cpu() {
         //store a local port id and remote mac address where a remote IP address was seen
         bit<32> hash_index_w;
         hash(hash_index_w, HashAlgorithm.crc32, 32w0, {hdr.ipv4.srcAddr}, IP_HASH_SIZE);
         ip_to_port_hash.write(hash_index_w, standard_metadata.ingress_port);
         ip_to_mac_hash.write(hash_index_w, hdr.ethernet.srcAddr);
         
-        hdr.ethernet.srcAddr = dp_mac;
+        hdr.ethernet.srcAddr = meta.loopback.dp_mac;
+        standard_metadata.egress_spec = meta.loopback.cpu_port;
         exit;
     }
-
-    table tb_configure_loopback_in {
-        actions = {
-            send_frame_to_cpu;
-        }
-        key = {
-            hdr.ethernet.dstAddr     : ternary;
-        }
-        size = 16;
-        const entries = {
-            CPU_MAC : send_frame_to_cpu(CPU_PORT, DP_MAC);
-            //BROADCAST_MAC : send_frame_to_cpu(CPU_PORT, DP_MAC);
-        }
-    }
-
-    
-    //action decap_cpu_header() {
-    //    standard_metadata.egress_spec = (bit<9>)hdr.cpu_header.port;
-    //    hdr.cpu_header.setInvalid();
-    //}
     
     action send_frame_from_cpu() {
         //lookup for a local port id and remote mac address where a switch can find a remote IPv4 address 
@@ -82,19 +65,16 @@ control Loopback(inout headers hdr, inout metadata meta, inout standard_metadata
         exit;
     }
     
-    table tb_configure_loopback_out {
-        actions = {
-            send_frame_from_cpu;
-        }
-        key = {
-            standard_metadata.ingress_port     : exact;
-        }
-        size = 1024;
-        const entries = {
-            CPU_PORT : send_frame_from_cpu();
-        }
+    apply {
+        tb_configure_loopback.apply();
+        if (hdr.ethernet.dstAddr == meta.loopback.cpu_mac)
+            send_frame_to_cpu();
+        if (standard_metadata.ingress_port == meta.loopback.cpu_port && hdr.ipv4.isValid())
+            send_frame_from_cpu();
     }
-    
+}
+
+control ARP_Responder(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
     action send_arp_reply(bit<48> my_mac) {
         hdr.ethernet.dstAddr = hdr.arp.srcMAC;
@@ -111,14 +91,7 @@ control Loopback(inout headers hdr, inout metadata meta, inout standard_metadata
         standard_metadata.egress_spec = standard_metadata.ingress_port;
         exit;
     }
-
     
-    action drop() {
-        mark_to_drop();
-        exit;
-    }
-    
-
     table tb_arp_responder {
         key = {
             hdr.arp.isValid()      : exact;
@@ -127,7 +100,6 @@ control Loopback(inout headers hdr, inout metadata meta, inout standard_metadata
         }
         actions = {
             send_arp_reply;
-            drop;
         }
         const entries = {
             (true, ARP_OPER_REQUEST,  CPU_IP) : send_arp_reply(CPU_MAC);
@@ -138,21 +110,7 @@ control Loopback(inout headers hdr, inout metadata meta, inout standard_metadata
     apply {
         tb_arp_responder.apply();
         
-        if (hdr.arp.isValid() && hdr.arp.opcode == ARP_OPER_REQUEST && standard_metadata.ingress_port == CPU_PORT)
-             send_arp_reply(DP_MAC);
-        
-        //if (hdr.cpu_header.isValid()) {
-        //    decap_cpu_header();
-        //}
-        /*
-        if (!hdr.arp.isValid()) {
-            tb_configure_loopback_out.apply();
-            
-            if (hdr.ipv4.isValid())      
-                tb_configure_loopback_in.apply();
-        }
-        */
-        tb_configure_loopback_in.apply();
-        tb_configure_loopback_out.apply();
+        if (hdr.arp.isValid() && hdr.arp.opcode == ARP_OPER_REQUEST && standard_metadata.ingress_port == meta.loopback.cpu_port)
+             send_arp_reply(meta.loopback.dp_mac);
     }
 }

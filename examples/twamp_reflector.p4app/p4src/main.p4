@@ -23,7 +23,7 @@
 #include "include/parser.p4"
 #include "include/forward.p4"
 #include "include/twamp_reflector.p4"
-#include "include/loopback_traffic.p4"
+#include "include/loopback.p4"
 
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 	
@@ -35,9 +35,11 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         // expose CPU communication (eg.: TWAMP server) via Loopback mechanism
         Loopback.apply(hdr, meta, standard_metadata);
         
+        //Handling ARP requests for Loopback and TwampReflector services
+        ARP_Responder.apply(hdr, meta, standard_metadata);
+        
         //Forward.apply(hdr, meta, standard_metadata);
 		
-        
 	}
 }
 

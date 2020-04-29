@@ -34,7 +34,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
     }
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
-        meta.meta.L4Length = hdr.ipv4.totalLen - 16w20;
+        meta.checksum.L4Length = hdr.ipv4.totalLen - 16w20;
         transition select(hdr.ipv4.protocol) {
             8w0x11: parse_udp;
             8w0x6: parse_tcp;
@@ -53,14 +53,8 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
             default: accept;
         }
     }
-    state parse_cpu_header {
-        packet.extract(hdr.cpu_header);
-        standard_metadata.egress_spec = (bit<9>)hdr.cpu_header.port;
-        transition parse_ethernet;
-    }
     state start {
         transition select((packet.lookahead<bit<64>>())[63:0]) {
-            64w0: parse_cpu_header;
             default: parse_ethernet;
         }
     }
@@ -108,7 +102,7 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
                 hdr.ipv4.dstAddr, 
                 8w0, 
                 hdr.ipv4.protocol, 
-                meta.meta.L4Length, 
+                meta.checksum.L4Length, 
                 hdr.tcp.srcPort, 
                 hdr.tcp.dstPort, 
                 hdr.tcp.seqNo, 
@@ -193,7 +187,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
                 hdr.ipv4.dstAddr, 
                 8w0, 
                 hdr.ipv4.protocol, 
-                meta.meta.L4Length, 
+                meta.checksum.L4Length, 
                 hdr.tcp.srcPort, 
                 hdr.tcp.dstPort, 
                 hdr.tcp.seqNo, 
