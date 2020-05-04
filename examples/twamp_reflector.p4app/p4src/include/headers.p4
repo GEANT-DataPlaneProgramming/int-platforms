@@ -139,14 +139,6 @@ header checksum_metadata_t {
     bit<16> L4Length;
 }
 
-header twamp_metadata_t {
-    bit<32> senderAddr;
-    bit<16> senderPort; 
-    bit<32> receiverAddr;
-    bit<16> receiverPort;
-    bit<32> dscp;
-}
-
 header loopback_metadata_t {
     bit<32> cpu_ip;       // IP address of CPU veth endpoint
     bit<48> cpu_mac;    // MAC address of CPU veth endpoint
@@ -155,7 +147,6 @@ header loopback_metadata_t {
 }
 
 struct metadata {
-    twamp_metadata_t twamp;
     checksum_metadata_t checksum;
     loopback_metadata_t loopback;
 }

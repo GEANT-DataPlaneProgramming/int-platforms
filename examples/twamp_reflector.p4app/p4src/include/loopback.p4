@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const bit<9> CPU_PORT = 3;
+const bit<9> CPU_PORT = 2;
 
 const bit<32> IP_HASH_SIZE = 1024;
 register<bit<9>> (IP_HASH_SIZE) ip_to_port_hash;
@@ -23,7 +23,6 @@ register<bit<48>> (IP_HASH_SIZE) ip_to_mac_hash;
 const bit<48> CPU_MAC = 0xf661c06a1466;
 const bit<32> CPU_IP = 0x0a0000fe;
 const bit<48> DP_MAC =  0xf661c06a0077;
-const bit<32> TWAMP_REFLECTOR_IP = 0x0a0000fd;
 const bit<48> TWAMP_REFLECTOR_MAC =  0xf661c06a0055;
 const bit<48> BROADCAST_MAC = 0xFFFFFFFFFFFF;
 

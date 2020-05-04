@@ -15,25 +15,23 @@
  */
  
 
-control TwampReflector(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+const bit<32> TWAMP_REFLECTOR_IP = 0x0a0000fe;
+const bit<32> TWAMP_REFLECTOR_IP_2 = 0x0a0000fd;
+const bit<32> CLIENT_IP = 0x0a000101;
+const bit<16> TWAMP_REFLECTOR_PORT = 8975;
+const bit<16> CLIENT_PORT = 20001;
 
-    action configure_reflector(bit<32> senderAddr, bit<16> senderPort, bit<32> receiverAddr, bit<16> receiverPort,  bit<32> dscp) {
-        meta.twamp.senderAddr = senderAddr;
-        meta.twamp.senderPort = senderPort;
-        meta.twamp.receiverAddr = receiverAddr;
-        meta.twamp.receiverPort = receiverPort;
-        meta.twamp.dscp = dscp;
-    }
-    table tb_configure_reflector {
-        actions = {
-            configure_reflector;
-        }
-    }
+// seconds from 1900 to start time of bmv2 instance
+register<bit<32>> (1) start_timestamp;
+
+control TwampReflector(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
     
     action bmv2timestamp_to_ntp(in bit<48> timestamp, out bit<64> ntp) {
         // converts bmv2 timestamp (number of miliseconds from bmv2 start to NTP timestamp
         // TODO: configure number of seconds from 1900 to bmv2 start
-        bit<32> seconds = (bit<32>) (timestamp >> 10);  //simplication (divide by 1024 instead of 1000)
+        bit<32> seconds = 0;  
+        start_timestamp.read(seconds, 0);
+        seconds = seconds + (bit<32>) (timestamp >> 10); //simplication (divide by 1024 instead of 1000)
         bit<32> miliseconds = (bit<32>) (timestamp & 0x400); //simplication (modulo by 1024 instead of 1000)
         ntp = (bit<64>)seconds<<32;
         ntp = ntp + (bit<64>)0;  // TODO: convert miliseconds to fraction of a second (a float value)
@@ -60,16 +58,32 @@ control TwampReflector(inout headers hdr, inout metadata meta, inout standard_me
         
         bmv2timestamp_to_ntp(standard_metadata.ingress_global_timestamp, hdr.twamp_test.receiveTimestamp);
         bmv2timestamp_to_ntp(standard_metadata.egress_global_timestamp, hdr.twamp_test.timestamp);
-        //hdr.twamp_test.errorEstimate = ?; //TODO: use local time error estimate
+        
+        //hdr.twamp_test.errorEstimate = ?; //TODO: currently using client errorEstimate (not overwritting by the reflector)
         
         // send frame back to TWAMP client
         standard_metadata.egress_spec = standard_metadata.ingress_port;
         exit;
     }
+    
+    table tb_twamp_reflector {
+        key = {
+            hdr.twamp_test.isValid()  : exact;
+            hdr.ipv4.srcAddr              : exact;
+            hdr.udp.srcPort                : exact;
+            hdr.ipv4.dstAddr              : exact;
+            hdr.udp.dstPort                : exact;
+        }
+        actions = {
+            twamp_reflect;
+        }
+        const entries = {
+            (true, CLIENT_IP,  CLIENT_PORT, TWAMP_REFLECTOR_IP, TWAMP_REFLECTOR_PORT) : twamp_reflect();
+            (true, CLIENT_IP,  CLIENT_PORT, TWAMP_REFLECTOR_IP_2, TWAMP_REFLECTOR_PORT) : twamp_reflect();
+        }
+    }
+    
     apply {
-        tb_configure_reflector.apply();
-        
-        if (hdr.twamp_test.isValid())
-            twamp_reflect();
+        tb_twamp_reflector.apply();
     }
 }

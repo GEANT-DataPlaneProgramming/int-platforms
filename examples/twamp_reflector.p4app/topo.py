@@ -30,11 +30,19 @@ import subprocess
 import threading
 import re
 import sys
+import time
+
+TWAMP_CONTROL_IP = "10.0.0.254"
+TWAMP_CONTROL_MAC = 'f6:61:c0:6a:14:66'
+TWAMP_CONTROL_PORT = 862
+VETH_DP_MAC = 'f6:61:c0:6a:00:77'
+TWAMP_REFLECTOR_IP = "10.0.0.254"
+TWAMP_REFLECTOR_PORT = 8975
+
 
 os.system('dpkg -i /tmp/python3-six_1.10.0-3_all.deb')
 os.system('tar -xvzf /tmp/construct-2.9.45.tar.gz')
 os.system('cd /tmp/construct-2.9.45 && python3 setup.py install')
-#from twamp_server import start_twamp_server
 
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 _THRIFT_BASE_PORT = 22222
@@ -85,31 +93,20 @@ def read_topo():
             links.append( (a, b) )
     return int(nb_hosts), int(nb_switches), links
 
-
-def readRegister(register, thrift_port, idx=None):
-        p = subprocess.Popen(['simple_switch_CLI', '--thrift-port', str(thrift_port)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if idx is not None:
-            stdout, stderr = p.communicate(input="register_read %s %d" % (register, idx))
-            reg_val = filter(lambda l: ' %s[%d]' % (register, idx) in l, stdout.split('\n'))[0].split('= ', 1)[1]
-            return long(reg_val)
-        else:
-            stdout, stderr = p.communicate(input="register_read %s" % (register))
-            return stdout
-
-def checkIntf( intf ):
-    "Make sure intf exists and is not configured."
-    quietRun( 'ifconfig %s 0 0.0.0.0 2>/dev/null' % intf, shell=True )
-    config = quietRun( 'ifconfig %s 2>/dev/null' % intf, shell=True )
-    #config = quietRun( 'ifconfig 2>/dev/null', shell=True )
-    print config
-    if not config:
-        print 'Error:', intf, 'does not exist!\n' 
-        exit(1)
-    ips = re.findall( r'\d+\.\d+\.\d+\.\d+', config )
-    print(ips)
-    #~ if ips:
-        #~ print 'Error:', intf, 'has an IP address, and is probably in use!\n' 
-        #~ exit(1)
+#simple_switch_CLI --thrift-port=22222
+def connect(thrift_port):
+    return subprocess.Popen(['simple_switch_CLI', '--thrift-port', str(thrift_port)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  
+   
+def writeRegister(thrift_port, register, idx, value):
+    p = connect(thrift_port)
+    entry = "register_write %s %d %d" % (register, idx, value)
+    print(entry)
+    stdout, stderr = p.communicate(input=entry)
+    # Parsing line like: 'RuntimeCmd: src_distribution_register1[3761]'
+    for line in stdout.splitlines():
+        #line = line.decode()
+        print(line)
         
 def checkIntf( intf ):
     "Make sure intf exists and is not configured."
@@ -130,12 +127,13 @@ def create_link_to_external_interface(switch, external_interface_name):
     _intf = Intf(external_interface_name, node=switch)
 
     
-def create_dp_cpu_link(switch, cpu_mac, cpu_ip):
+def create_dp_cpu_link(switch, cpu_mac, cpu_ip, dp_mac):
+    # add interface for packet-in and packet-out between switch DataPlane and switch CPU 
     quietRun( 'ip link add name veth_dp type veth peer name veth_cpu', shell=True )
     quietRun( 'ip netns add ns1', shell=True )
     quietRun( 'sudo ip link set veth_cpu netns ns1', shell=True )
     quietRun( 'ip netns exec ns1 ifconfig veth_cpu hw ether %s' % cpu_mac, shell=True )
-    quietRun( 'ifconfig veth_dp hw ether f6:61:c0:6a:00:77', shell=True )
+    quietRun( 'ifconfig veth_dp hw ether %s' % dp_mac, shell=True )
     quietRun( 'ip link set dev veth_dp up', shell=True )
     quietRun( 'ip netns exec ns1 ip link set dev veth_cpu up', shell=True )
     for off in "rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash".split(' '):
@@ -149,11 +147,29 @@ def create_dp_cpu_link(switch, cpu_mac, cpu_ip):
     quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.lo.disable_ipv6=1', shell=True )
     quietRun( 'ip netns exec ns1 sysctl -w net.ipv4.tcp_congestion_control=reno', shell=True )
     
-    print  '*** Adding hardware interface', 'veth_dp', 'to switch', switch.name, '\n'
+    # add additional veth in order to allow access to bmv2 thrift API
+    quietRun( 'ip link add name veth_dp_api type veth peer name veth_cpu_api', shell=True )
+    quietRun( 'sudo ip link set veth_cpu_api netns ns1', shell=True )
+    quietRun( 'ip netns exec ns1 ifconfig veth_cpu_api %s/24' % '192.168.0.254', shell=True )
+    quietRun( 'ip netns exec ns1 ip route add 172.17.0.0/16 dev veth_cpu_api' , shell=True )
+    quietRun( 'ip netns exec ns1 ip link set dev veth_cpu_api up', shell=True )
+    quietRun( 'ifconfig veth_dp_api %s/24' % '192.168.0.2', shell=True )
+    quietRun( 'ip link set dev veth_dp_api up', shell=True )
+    
     _intf = Intf('veth_dp', node=switch) 
+    veth_dp_port = switch.intfNames().index('veth_dp')
+    print  '*** Adding hardware interface', 'veth_dp', 'to switch', switch.name, 'with port index', veth_dp_port, '\n'
+    return veth_dp_port
+
     
 def run_twamp_server():
-    os.system('ip netns exec ns1 python3 twamp_server.py')
+    os.system('ip netns exec ns1 python3 twamp_server.py %s:%s %s:%s' % (TWAMP_CONTROL_IP, TWAMP_CONTROL_PORT, TWAMP_REFLECTOR_IP, TWAMP_REFLECTOR_PORT))
+    
+def setup_start_time_for_twamp_reflector():
+    TIMEOFFSET = 2208988800    # Time Difference: 1-JAN-1900 to 1-JAN-1970
+    offset = int(time.time()) + TIMEOFFSET
+    print("Setting time offset %d for NTP", offset)
+    writeRegister(thrift_port=22222, register='start_timestamp', idx=0, value=offset)
 
 def start_twamp_server():
     thread = threading.Thread(target=run_twamp_server)
@@ -172,9 +188,9 @@ def main():
                   controller = None,
                   autoStaticArp=True)
     
+    veth_dp_port = create_dp_cpu_link(switch=net.switches[0], cpu_mac =TWAMP_CONTROL_MAC, cpu_ip=TWAMP_CONTROL_IP, dp_mac=VETH_DP_MAC)
     create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
-    create_dp_cpu_link(switch=net.switches[0], cpu_mac ='f6:61:c0:6a:14:66', cpu_ip='10.0.0.254')
-
+    
     net.start()
 
     for n in xrange(nb_hosts):
@@ -213,6 +229,7 @@ def main():
         s.cmd("iptables -I OUTPUT -p icmp --icmp-type destination-unreachable -j DROP")
 
     sleep(1)
+    setup_start_time_for_twamp_reflector()
     start_twamp_server()
     print "Ready !"
 
