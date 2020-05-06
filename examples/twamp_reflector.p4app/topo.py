@@ -190,7 +190,7 @@ def main():
                   autoStaticArp=True)
     
     veth_dp_port = create_dp_cpu_link(switch=net.switches[0], cpu_mac =TWAMP_CONTROL_MAC, cpu_ip=TWAMP_CONTROL_IP, dp_mac=VETH_DP_MAC)
-    create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
+    #create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
     
     net.start()
 
