@@ -338,10 +338,18 @@ class twampySessionSender(udpSession):
                     log.error("short packet received: %d bytes", len(data))
                     continue
     
-                t3 = time_ntp2py(data[4:12])
-                t2 = time_ntp2py(data[16:24])
-                t1 = time_ntp2py(data[28:36])
+                t3 = time_ntp2py(data[4:12])  # timestamp
+                t2 = time_ntp2py(data[16:24]) # receiveTimestamp
+                t1 = time_ntp2py(data[28:36]) # senderTimestamp
 
+                #~ print(" senderTimestamp", t1)
+                #~ print("receiveTimestamp", t2)
+                #~ print("       timestamp", t3)
+                #~ print("      client now", t4)
+                #~ print("         t4 - t1", t4 -  t1)
+                #~ print("         t3 - t2", t3 -  t2)
+                #~ print("         t2 - t1", t2 -  t1)
+                
                 delayRT = max(0, 1000 * (t4 - t1 + t2 - t3))  # round-trip delay
                 delayOB = max(0, 1000 * (t2 - t1))            # out-bound delay
                 delayIB = max(0, 1000 * (t4 - t3))            # in-bound delay

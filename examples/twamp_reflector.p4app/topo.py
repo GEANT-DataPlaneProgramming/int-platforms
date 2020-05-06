@@ -166,6 +166,7 @@ def run_twamp_server():
     os.system('ip netns exec ns1 python3 twamp_server.py %s:%s %s:%s' % (TWAMP_CONTROL_IP, TWAMP_CONTROL_PORT, TWAMP_REFLECTOR_IP, TWAMP_REFLECTOR_PORT))
     
 def setup_start_time_for_twamp_reflector():
+    "bmv2 timestamp is 44501 863"
     TIMEOFFSET = 2208988800    # Time Difference: 1-JAN-1900 to 1-JAN-1970
     offset = int(time.time()) + TIMEOFFSET
     print("Setting time offset %d for NTP", offset)
@@ -193,6 +194,8 @@ def main():
     
     net.start()
 
+    setup_start_time_for_twamp_reflector()
+        
     for n in xrange(nb_hosts):
         h = net.get('h%d' % (n + 1))
         for off in ["rx", "tx", "sg"]:
@@ -229,7 +232,7 @@ def main():
         s.cmd("iptables -I OUTPUT -p icmp --icmp-type destination-unreachable -j DROP")
 
     sleep(1)
-    setup_start_time_for_twamp_reflector()
+
     start_twamp_server()
     print "Ready !"
 
@@ -239,3 +242,4 @@ def main():
 if __name__ == '__main__':
     setLogLevel( 'info' )
     main()
+

@@ -31,8 +31,8 @@ control TwampReflector(inout headers hdr, inout metadata meta, inout standard_me
         // TODO: configure number of seconds from 1900 to bmv2 start
         bit<32> seconds = 0;  
         start_timestamp.read(seconds, 0);
-        seconds = seconds + (bit<32>) (timestamp >> 10); //simplication (divide by 1024 instead of 1000)
-        bit<32> miliseconds = (bit<32>) (timestamp & 0x400); //simplication (modulo by 1024 instead of 1000)
+        seconds = seconds + (bit<32>) (timestamp >> 20); //simplication (divide by 1048576 instead of a million)
+        bit<32> miliseconds = (bit<32>) (timestamp & 0xFFFFF); //simplication (modulo by 1048576 instead of a million)
         ntp = (bit<64>)seconds<<32;
         ntp = ntp + (bit<64>)0;  // TODO: convert miliseconds to fraction of a second (a float value)
     }
@@ -57,7 +57,7 @@ control TwampReflector(inout headers hdr, inout metadata meta, inout standard_me
         hdr.twamp_test.senderTTL = hdr.ipv4.ttl;
         
         bmv2timestamp_to_ntp(standard_metadata.ingress_global_timestamp, hdr.twamp_test.receiveTimestamp);
-        bmv2timestamp_to_ntp(standard_metadata.egress_global_timestamp, hdr.twamp_test.timestamp);
+        bmv2timestamp_to_ntp(standard_metadata.ingress_global_timestamp, hdr.twamp_test.timestamp);
         
         //hdr.twamp_test.errorEstimate = ?; //TODO: currently using client errorEstimate (not overwritting by the reflector)
         
