@@ -23,8 +23,8 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
 
     action configure_transit(bit<32> switch_id, bit<16> l3_mtu) {
         meta.int_metadata.switch_id = switch_id;
-        meta.int_metadata.insert_byte_cnt = (bit<16>) hdr.int_header.hop_metadata_len << 2;
-        meta.int_metadata.int_hdr_word_len = (bit<8>) hdr.int_header.hop_metadata_len;
+        meta.int_metadata.insert_byte_cnt = 0;
+        meta.int_metadata.int_hdr_word_len = 0;
         meta.layer34_metadata.l3_mtu = l3_mtu;
     }
     table tb_int_transit {
@@ -72,135 +72,189 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         hdr.int_egress_port_tx_util.egress_port_tx_util = 0;
     }
 
+    @hidden
+    action add_1() {
+        meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 1;
+        meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 4;
+    }
+
+    @hidden
+    action add_2() {
+        meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 2;
+        meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 8;
+    }
+
+    @hidden
+    action add_3() {
+        meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 3;
+        meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 12;
+    }
+
+    @hidden
+    action add_4() {
+        meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 4;
+        meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 16;
+    }
+
     action int_set_header_0003_i0() {
         ;
     }
     action int_set_header_0003_i1() {
         int_set_header_3();
+        add_1();
     }
     action int_set_header_0003_i2() {
         int_set_header_2();
+        add_1();
     }
     action int_set_header_0003_i3() {
         int_set_header_3();
         int_set_header_2();
+        add_2();
     }
     action int_set_header_0003_i4() {
         int_set_header_1();
+        add_1();
     }
     action int_set_header_0003_i5() {
         int_set_header_3();
         int_set_header_1();
+        add_2();
     }
     action int_set_header_0003_i6() {
         int_set_header_2();
         int_set_header_1();
+        add_2();
     }
     action int_set_header_0003_i7() {
         int_set_header_3();
         int_set_header_2();
         int_set_header_1();
+        add_3();
     }
     action int_set_header_0003_i8() {
         int_set_header_0();
+        add_1();
     }
     action int_set_header_0003_i9() {
         int_set_header_3();
         int_set_header_0();
+        add_2();
     }
     action int_set_header_0003_i10() {
         int_set_header_2();
         int_set_header_0();
+        add_2();
     }
     action int_set_header_0003_i11() {
         int_set_header_3();
         int_set_header_2();
         int_set_header_0();
+        add_3();
     }
     action int_set_header_0003_i12() {
         int_set_header_1();
         int_set_header_0();
+        add_2();
     }
     action int_set_header_0003_i13() {
         int_set_header_3();
         int_set_header_1();
         int_set_header_0();
+        add_3();
     }
     action int_set_header_0003_i14() {
         int_set_header_2();
         int_set_header_1();
         int_set_header_0();
+        add_3();
     }
     action int_set_header_0003_i15() {
         int_set_header_3();
         int_set_header_2();
         int_set_header_1();
         int_set_header_0();
+        add_4();
     }
     action int_set_header_0407_i0() {
         ;
     }
     action int_set_header_0407_i1() {
         int_set_header_7();
+        add_1();
     }
     action int_set_header_0407_i2() {
         int_set_header_6();
+        add_1();
     }
     action int_set_header_0407_i3() {
         int_set_header_7();
         int_set_header_6();
+        add_2();
     }
     action int_set_header_0407_i4() {
         int_set_header_5();
+        add_1();
     }
     action int_set_header_0407_i5() {
         int_set_header_7();
         int_set_header_5();
+        add_2();
     }
     action int_set_header_0407_i6() {
         int_set_header_6();
         int_set_header_5();
+        add_2();
     }
     action int_set_header_0407_i7() {
         int_set_header_7();
         int_set_header_6();
         int_set_header_5();
+        add_3();
     }
     action int_set_header_0407_i8() {
         int_set_header_4();
+        add_1();
     }
     action int_set_header_0407_i9() {
         int_set_header_7();
         int_set_header_4();
+        add_2();
     }
     action int_set_header_0407_i10() {
         int_set_header_6();
         int_set_header_4();
+        add_2();
     }
     action int_set_header_0407_i11() {
         int_set_header_7();
         int_set_header_6();
         int_set_header_4();
+        add_3();
     }
     action int_set_header_0407_i12() {
         int_set_header_5();
         int_set_header_4();
+        add_2();
     }
     action int_set_header_0407_i13() {
         int_set_header_7();
         int_set_header_5();
         int_set_header_4();
+        add_3();
     }
     action int_set_header_0407_i14() {
         int_set_header_6();
         int_set_header_5();
         int_set_header_4();
+        add_3();
     }
     action int_set_header_0407_i15() {
         int_set_header_7();
         int_set_header_6();
         int_set_header_5();
         int_set_header_4();
+        add_4();
     }
 
     table tb_int_inst_0003 {
@@ -288,14 +342,11 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         size = 16;
     }
 
-    action int_hop_cnt_decrement() {
-        hdr.int_header.remaining_hop_cnt = hdr.int_header.remaining_hop_cnt - 1;
+    action int_hop_cnt_increment() {
+        hdr.int_header.total_hops = hdr.int_header.total_hops + 1;
     }
     action int_hop_exceeded() {
         hdr.int_header.e = 1w1;
-    }
-    action int_mtu_limit_hit() {
-        hdr.int_header.m = 1w1;
     }
 
     action int_update_ipv4_ac() {
@@ -315,15 +366,15 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         
         //TODO: check if hop-by-hop INT or destination INT
         
-        if (hdr.int_header.remaining_hop_cnt == 0 || hdr.int_header.e == 1) {
+        if (hdr.int_header.total_hops == hdr.int_header.max_hops  || hdr.int_header.e == 1) {
             int_hop_exceeded();
             return;
         }
         
-        if (hdr.ipv4.totalLen + meta.int_metadata.insert_byte_cnt > meta.layer34_metadata.l3_mtu)
-            int_mtu_limit_hit();
+        //if (hdr.ipv4.totalLen + meta.int_metadata.insert_byte_cnt > meta.layer34_metadata.l3_mtu)
+        //    int_mtu_limit_hit();
 
-        int_hop_cnt_decrement();
+        int_hop_cnt_increment();
 
         tb_int_transit.apply();
         tb_int_inst_0003.apply();

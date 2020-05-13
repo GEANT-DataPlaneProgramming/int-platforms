@@ -5,6 +5,7 @@
  *
  * Created in the GN4-3 project.
  *
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,24 +23,32 @@ control Int_source(inout headers hdr, inout metadata meta, inout standard_metada
 
     action configure_source(bit<8> max_hop, bit<5> ins_cnt, bit<16> ins_mask) {
         hdr.int_shim.setValid();
-        hdr.int_shim.int_type = 8w1;
-        hdr.int_shim.len = 8w4;
-        hdr.int_header.setValid();
-        hdr.int_header.ver = 4w1;
-        hdr.int_header.rep = 2w0;
-        hdr.int_header.c = 1w0;
-        hdr.int_header.e = 1w0;
-        hdr.int_header.m = 1w0;
-        hdr.int_header.rsvd1 = 7w0;
-        hdr.int_header.rsvd2 = 3w0;
-        hdr.int_header.remaining_hop_cnt = max_hop+1;  //will be decreased immediately by 1 within transit process
-        hdr.int_header.hop_metadata_len = ins_cnt;
-        hdr.int_header.instruction_mask = ins_mask;
-        hdr.int_header.rsvd3= 16w0;
+        hdr.int_shim.int_type = 1;
+        hdr.int_shim.len = (bit<8>)INT_SHIM_HEADER_LEN_BYTES;
         
-        hdr.ipv4.dscp = 6w0x20;   // indicates that INT header in the packet
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16w12;  // adding size of INT headers
-        hdr.udp.len = hdr.udp.len + 16w12;
+        hdr.int_header.setValid();
+        hdr.int_header.ver = 1;
+        hdr.int_header.rep = 0;
+        hdr.int_header.c = 0;
+        hdr.int_header.e = 0;
+        hdr.int_header.rsvd1 = 0;
+        hdr.int_header.rsvd2 = 0;
+        hdr.int_header.ins_cnt = ins_cnt;
+        hdr.int_header.max_hops = max_hop;
+        hdr.int_header.total_hops = 0;  //will be increased immediately by 1 within transit process
+        hdr.int_header.instruction_mask = ins_mask;
+        
+        hdr.int_tail.setValid();
+        hdr.int_tail.next_proto = hdr.ipv4.protocol;
+        hdr.int_tail.dscp = hdr.ipv4.dscp;
+        
+        hdr.ipv4.dscp = IPv4_DSCP_INT;   // indicates that INT header in the packet
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + INT_ALL_HEADER_LEN_BYTES;  // adding size of INT headers
+        
+        if (hdr.udp.isValid()){
+            hdr.udp.len = hdr.udp.len + INT_ALL_HEADER_LEN_BYTES;
+            hdr.int_tail.dest_port = hdr.udp.dstPort;
+        }
 
     }
     table tb_int_source {

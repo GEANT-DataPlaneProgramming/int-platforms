@@ -73,6 +73,9 @@ header gtp_start_t {
     bit<32> teid;
 }
 
+const bit<6> IPv4_DSCP_INT = 0x20;   // indicates that INT header in the packet
+const bit<16> INT_SHIM_HEADER_LEN_BYTES = 4;
+
 header intl4_shim_t {
     bit<8> int_type;
     bit<8> rsvd1;
@@ -81,19 +84,32 @@ header intl4_shim_t {
     bit<2> rsvd2;
 }
 
+const bit<16> INT_HEADER_LEN_BYTES = 8;
+
 header int_header_t {
-    bit<4> ver;
+    bit<2> ver;
     bit<2> rep;
     bit<1> c;
     bit<1> e;
-    bit<1> m;
-    bit<7> rsvd1;
-    bit<3> rsvd2;
-    bit<5> hop_metadata_len;
-    bit<8> remaining_hop_cnt;
+    bit<5> rsvd1;
+    bit<5> ins_cnt;  // the number of instructions that are set in the instruction mask
+    bit<8> max_hops; // maximum number of hops inserting INT metadata
+    bit<8> total_hops; // number of hops that inserted INT metadata
     bit<16> instruction_mask;
-    bit<16> rsvd3;
+    bit<16> rsvd2;
 }
+
+// INT tail header for TCP/UDP - 4 bytes
+const bit<16> INT_TAIL_HEADER_LEN_BYTES = 4;
+
+header intl4_tail_t {
+    bit<8> next_proto;
+    bit<16> dest_port;
+    bit<2> padding;
+    bit<6> dscp;
+}
+
+const bit<16> INT_ALL_HEADER_LEN_BYTES = INT_SHIM_HEADER_LEN_BYTES + INT_HEADER_LEN_BYTES + INT_TAIL_HEADER_LEN_BYTES;
 
 header int_switch_id_t {
     bit<32> switch_id;
@@ -174,6 +190,7 @@ struct headers {
 
     intl4_shim_t          int_shim;
     int_header_t         int_header;
+    intl4_tail_t            int_tail;
 
     int_egress_port_tx_util_t  int_egress_port_tx_util;
     int_egress_tstamp_t         int_egress_tstamp;

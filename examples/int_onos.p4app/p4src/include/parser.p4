@@ -64,7 +64,7 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
         meta.layer34_metadata.l4_dst = hdr.tcp.dstPort;
         meta.layer34_metadata.l4_proto = 8w0x6;
         transition select(meta.layer34_metadata.dscp) {
-            6w0x20: parse_int_shim;
+            IPv4_DSCP_INT: parse_int_shim;
             default: accept;
         }
     }
@@ -124,6 +124,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_q_occupancy);
         packet.emit(hdr.int_ingress_tstamp);
         packet.emit(hdr.int_egress_tstamp);
+        packet.emit(hdr.int_tail);
     }
 }
 
@@ -134,5 +135,24 @@ control verifyChecksum(inout headers hdr, inout metadata meta) {
 
 control computeChecksum(inout headers hdr, inout metadata meta) {
     apply {
+        update_checksum(
+            hdr.ipv4.isValid(),
+            {
+                hdr.ipv4.version,
+                hdr.ipv4.ihl,
+                hdr.ipv4.dscp,
+                hdr.ipv4.ecn,
+                hdr.ipv4.totalLen,
+                hdr.ipv4.id,
+                hdr.ipv4.flags,
+                hdr.ipv4.fragOffset,
+                hdr.ipv4.ttl,
+                hdr.ipv4.protocol,
+                hdr.ipv4.srcAddr,
+                hdr.ipv4.dstAddr
+            },
+            hdr.ipv4.hdrChecksum,
+            HashAlgorithm.csum16
+        );
     }
 }
