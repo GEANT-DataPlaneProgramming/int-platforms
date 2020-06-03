@@ -17,7 +17,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
+register<bit<64>> (1) start_timestamp;
 
 control Int_transit(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
@@ -53,12 +54,13 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
     }
     action int_set_header_4() {
         hdr.int_ingress_tstamp.setValid();
-        hdr.int_ingress_tstamp.ingress_tstamp = (bit<32>)meta.intrinsic_metadata.ingress_timestamp;
+        start_timestamp.read(hdr.int_ingress_tstamp.ingress_tstamp, 0);
+        hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + (bit<64>)(meta.intrinsic_metadata.ingress_timestamp*1000);
     }
     action int_set_header_5() {
         hdr.int_egress_tstamp.setValid();
-        hdr.int_egress_tstamp.egress_tstamp = (bit<32>)meta.intrinsic_metadata.ingress_timestamp;
-        hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + 32w1;
+        start_timestamp.read(hdr.int_egress_tstamp.egress_tstamp, 0);
+        hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + (bit<64>)(meta.intrinsic_metadata.ingress_timestamp*1000) + 1;
     }
     action int_set_header_6() {
         // TODO: implement queue congestion support in BMv2

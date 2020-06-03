@@ -125,11 +125,11 @@ header int_hop_latency_t {
 }
 
 header int_ingress_tstamp_t {
-    bit<32> ingress_tstamp;
+    bit<64> ingress_tstamp;
 }
 
 header int_egress_tstamp_t {
-    bit<32> egress_tstamp;
+    bit<64> egress_tstamp;
 }
 
 header int_egress_port_tx_util_t {

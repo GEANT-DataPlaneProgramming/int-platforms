@@ -1,1 +1,1 @@
-p4app run examples/twamp_reflector.p4app
+p4app run examples/int_onos.p4app

@@ -86,6 +86,11 @@ def readRegister(register, thrift_port, idx=None):
             stdout, stderr = p.communicate(input="register_read %s" % (register))
             return stdout
 
+def setup_start_time():
+    offset = int(time.time())
+    print("Setting time offset %d", offset)
+    for port in [22222, 22223, 22224]:
+        writeRegister(thrift_port=port, register='start_timestamp', idx=0, value=offset)
 
 def main():
     nb_hosts, nb_switches, links = read_topo()
