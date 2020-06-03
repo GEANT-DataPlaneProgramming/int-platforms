@@ -18,11 +18,14 @@ from mininet.net import Mininet
 from mininet.topo import Topo
 from mininet.log import setLogLevel
 from mininet.cli import CLI
+from mininet.link import Intf
+from mininet.util import quietRun
+
 
 from p4_mininet import P4Switch, P4Host
 
 import argparse
-from time import sleep
+from time import sleep, time
 import os
 import subprocess
 
@@ -75,6 +78,9 @@ def read_topo():
             links.append( (a, b) )
     return int(nb_hosts), int(nb_switches), links
 
+def connect(thrift_port):
+    return subprocess.Popen(['simple_switch_CLI', '--thrift-port', str(thrift_port)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  
 
 def readRegister(register, thrift_port, idx=None):
         p = subprocess.Popen(['simple_switch_CLI', '--thrift-port', str(thrift_port)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -85,12 +91,28 @@ def readRegister(register, thrift_port, idx=None):
         else:
             stdout, stderr = p.communicate(input="register_read %s" % (register))
             return stdout
+            
+def writeRegister(thrift_port, register, idx, value):
+    p = connect(thrift_port)
+    entry = "register_write %s %d %d" % (register, idx, value)
+    print(entry)
+    stdout, stderr = p.communicate(input=entry)
+    # Parsing line like: 'RuntimeCmd: src_distribution_register1[3761]'
+    for line in stdout.splitlines():
+        #line = line.decode()
+        print(line)
+
 
 def setup_start_time():
-    offset = int(time.time())
+    offset = int(time()*1000000)
     print("Setting time offset %d", offset)
     for port in [22222, 22223, 22224]:
         writeRegister(thrift_port=port, register='start_timestamp', idx=0, value=offset)
+        
+def create_link_to_external_interface(switch, external_interface_name):
+    print  '*** Adding hardware interface', external_interface_name, 'to switch', switch.name, '\n'
+    _intf = Intf(external_interface_name, node=switch)
+
 
 def main():
     nb_hosts, nb_switches, links = read_topo()
@@ -104,7 +126,11 @@ def main():
                   controller = None,
                   autoStaticArp=True)
 
+    create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
+
     net.start()
+    
+    setup_start_time()
 
     for n in xrange(nb_hosts):
         h = net.get('h%d' % (n + 1))

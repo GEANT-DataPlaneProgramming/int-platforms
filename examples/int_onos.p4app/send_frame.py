@@ -65,6 +65,8 @@ def send_random_traffic(dst):
     p = Ether(dst=dst_mac,src=src_mac)/IP(frag=0,dst=dst_ip,src=src_ip)
     p = p/UDP(sport=0x11FF, dport=0x22FF)/Raw(load=data)
     s.send(p)
+    
+    print("Frame send %s" % p)
 
 def run_in_background():
     thread = threading.Thread(target=send_random_traffic, args=("h2",))
@@ -77,4 +79,6 @@ if __name__ == "__main__":
         sys.exit(1)
     else:
         dst_name = 'h2' #sys.argv[1]
-        send_random_traffic(dst_name)
+        while True:
+            send_random_traffic(dst_name)
+            sleep(1)
