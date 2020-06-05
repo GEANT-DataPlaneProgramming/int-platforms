@@ -60,13 +60,12 @@ def send_random_traffic(dst):
     src_mac = "10:10:10:10:10:10"
     data = "ABCDFE" 
     src_ip = "10.0.10.10"
+    dst_mac = "fa:ca:94:a9:51:b6"
     s = conf.L2socket(iface=interface)
      
     p = Ether(dst=dst_mac,src=src_mac)/IP(frag=0,dst=dst_ip,src=src_ip)
     p = p/UDP(sport=0x11FF, dport=0x22FF)/Raw(load=data)
-    s.send(p)
-    
-    print("Frame send %s" % p)
+    print("Bytes sent: %d" % s.send(p))
 
 def run_in_background():
     thread = threading.Thread(target=send_random_traffic, args=("h2",))

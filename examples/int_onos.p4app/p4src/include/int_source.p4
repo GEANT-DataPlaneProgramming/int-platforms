@@ -48,6 +48,7 @@ control Int_source(inout headers hdr, inout metadata meta, inout standard_metada
         if (hdr.udp.isValid()){
             hdr.udp.len = hdr.udp.len + INT_ALL_HEADER_LEN_BYTES;
             hdr.int_tail.dest_port = hdr.udp.dstPort;
+            //hdr.udp.csum = 0;
         }
 
     }

@@ -154,5 +154,48 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16
         );
+        
+        update_checksum_with_payload(
+            hdr.udp.isValid(), 
+            {  hdr.ipv4.srcAddr, 
+                hdr.ipv4.dstAddr, 
+                8w0, 
+                hdr.ipv4.protocol, 
+                hdr.udp.len, 
+                hdr.udp.srcPort, 
+                hdr.udp.dstPort, 
+                hdr.udp.len 
+            }, 
+            hdr.udp.csum, 
+            HashAlgorithm.csum16
+        ); 
+
+        update_checksum_with_payload(
+            hdr.udp.isValid() && hdr.int_header.isValid() , 
+            {  hdr.ipv4.srcAddr, 
+                hdr.ipv4.dstAddr, 
+                8w0, 
+                hdr.ipv4.protocol, 
+                hdr.udp.len, 
+                hdr.udp.srcPort, 
+                hdr.udp.dstPort, 
+                hdr.udp.len,
+                hdr.int_shim,
+                hdr.int_header,
+                hdr.int_tail,
+                hdr.int_switch_id,
+                hdr.int_port_ids,
+                hdr.int_q_occupancy,
+                hdr.int_q_congestion,
+                hdr.int_ingress_tstamp,
+                hdr.int_egress_tstamp,
+                hdr.int_egress_port_tx_util,
+                hdr.int_hop_latency
+            }, 
+            hdr.udp.csum, 
+            HashAlgorithm.csum16
+        );
     }
 }
+
+
