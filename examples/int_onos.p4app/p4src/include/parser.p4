@@ -117,13 +117,19 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.enc_ipv4);
         packet.emit(hdr.tcp);
         packet.emit(hdr.enc_udp);
+        
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
+        
         packet.emit(hdr.int_switch_id);
         packet.emit(hdr.int_port_ids);
+        packet.emit(hdr.int_hop_latency);
         packet.emit(hdr.int_q_occupancy);
         packet.emit(hdr.int_ingress_tstamp);
         packet.emit(hdr.int_egress_tstamp);
+        packet.emit(hdr.int_q_congestion);
+        packet.emit(hdr.int_egress_port_tx_util);
+        
         packet.emit(hdr.int_tail);
     }
 }

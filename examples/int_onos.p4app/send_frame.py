@@ -57,7 +57,7 @@ def send_random_traffic(dst):
         print ("Invalid host to send to")
         sys.exit(1)
 
-    src_mac = "10:10:10:10:10:10"
+    src_mac = "00:00:00:00:01:01"
     data = "ABCDFE" 
     src_ip = "10.0.10.10"
     dst_mac = "fa:ca:94:a9:51:b6"

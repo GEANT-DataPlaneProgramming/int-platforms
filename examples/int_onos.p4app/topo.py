@@ -127,6 +127,7 @@ def main():
                   autoStaticArp=True)
 
     create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
+    create_link_to_external_interface(switch=net.switches[2], external_interface_name='eth2')
 
     net.start()
     
