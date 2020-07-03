@@ -127,8 +127,8 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_q_occupancy);
         packet.emit(hdr.int_ingress_tstamp);
         packet.emit(hdr.int_egress_tstamp);
-        packet.emit(hdr.int_q_congestion);
         packet.emit(hdr.int_egress_port_tx_util);
+        packet.emit(hdr.int_q_congestion);
         
         packet.emit(hdr.int_tail);
     }

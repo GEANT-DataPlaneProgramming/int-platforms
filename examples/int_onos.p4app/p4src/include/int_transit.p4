@@ -55,12 +55,16 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
     action int_set_header_4() {
         hdr.int_ingress_tstamp.setValid();
         start_timestamp.read(hdr.int_ingress_tstamp.ingress_tstamp, 0);
-        hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + (bit<64>)(meta.intrinsic_metadata.ingress_timestamp*1000);
+        bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;
+        _timestamp = 1000 * _timestamp;
+        hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + _timestamp;
     }
     action int_set_header_5() {
         hdr.int_egress_tstamp.setValid();
         start_timestamp.read(hdr.int_egress_tstamp.egress_tstamp, 0);
-        hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + (bit<64>)(meta.intrinsic_metadata.ingress_timestamp*1000) + 1;
+        bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;
+        _timestamp = 1000 * _timestamp;
+        hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + _timestamp + 1;
     }
     action int_set_header_6() {
         // TODO: implement queue congestion support in BMv2

@@ -154,9 +154,9 @@ struct int_metadata_t {
     bit<8> int_hdr_word_len;
 }
 
-struct intrinsic_metadata_t {
-    bit<48> ingress_timestamp;
-}
+//struct intrinsic_metadata_t {
+//    bit<48> ingress_timestamp;
+//}
 
 struct layer34_metadata_t {
     bit<32> ip_src;
@@ -172,7 +172,7 @@ struct layer34_metadata_t {
 
 struct metadata {
     int_metadata_t  int_metadata;
-    intrinsic_metadata_t intrinsic_metadata;
+    //intrinsic_metadata_t intrinsic_metadata;
     layer34_metadata_t   layer34_metadata;
 }
 

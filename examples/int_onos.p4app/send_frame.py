@@ -17,67 +17,31 @@
 from scapy.all import Ether, IP, sendp, get_if_hwaddr, get_if_list, TCP, Raw, UDP
 from scapy.config import conf
 import sys
-import random, string
-from time import sleep
-from collections import Counter
-import threading
+from time import sleep, time
 
-def send_random_traffic(dst):
-    dst_mac = None
-    dst_ip = None
-    interface = None
-    #print get_if_list()
-    src_mac = [get_if_hwaddr(i) for i in get_if_list() if "eth0" in i]
-    interface = [i for i in get_if_list() if "eth0" in i][0]
-    if len(src_mac) < 1:
-        print ("No interface for output")
-        sys.exit(1)
-    src_mac = src_mac[0]
-    src_ip = None
-    if src_mac == "00:00:00:00:01:01":
-        src_ip = "10.0.1.1"
-    elif src_mac =="00:00:00:00:02:02":
-        src_ip = "10.0.2.2"
-    elif src_mac =="00:00:00:00:03:03":
-        src_ip = "10.0.3.3"
-    else:
-        print ("Invalid source host")
-        sys.exit(1)
+src_mac = "00:00:00:00:01:01"
+data = "ABCDFE" 
+src_ip = "10.0.10.10"
+dst_mac = "92:64:a3:10:03:84"
+dst_ip = "10.0.1.1"
 
-    if dst in ("h1","10.0.1.1"):
-        dst_mac = "00:00:00:00:01:01"
-        dst_ip = "10.0.1.1"
-    elif dst in ("h2","10.0.2.2"):
-        dst_mac = "00:00:00:00:02:02"
-        dst_ip = "10.0.2.2"
-    elif dst in ("h3","10.0.3.3"):
-        dst_mac = "00:00:00:00:03:03"
-        dst_ip = "10.0.3.3"
-    else:
-        print ("Invalid host to send to")
-        sys.exit(1)
+interface = [i for i in get_if_list() if "eth0" in i][0]
+s = conf.L2socket(iface=interface)
 
-    src_mac = "00:00:00:00:01:01"
-    data = "ABCDFE" 
-    src_ip = "10.0.10.10"
-    dst_mac = "fa:ca:94:a9:51:b6"
-    s = conf.L2socket(iface=interface)
-     
-    p = Ether(dst=dst_mac,src=src_mac)/IP(frag=0,dst=dst_ip,src=src_ip)
-    p = p/UDP(sport=0x11FF, dport=0x22FF)/Raw(load=data)
-    print("Bytes sent: %d" % s.send(p))
-
-def run_in_background():
-    thread = threading.Thread(target=send_random_traffic, args=("h2",))
-    thread.daemon = True
-    thread.start()
+p = Ether(dst=dst_mac,src=src_mac)/IP(frag=0,dst=dst_ip,src=src_ip)
+p = p/UDP(sport=0x11FF, dport=0x22FF)/Raw(load=data)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 1:
-        print("Usage: python send.py dst_host_name")
-        sys.exit(1)
-    else:
-        dst_name = 'h2' #sys.argv[1]
-        while True:
-            send_random_traffic(dst_name)
-            sleep(1)
+    pkt_cnt = 0
+    last_sec = time()
+    while True:
+        #start = time()
+        s.send(p)
+        #print("Send time is %s", time()-start)
+        #sleep(0.001)
+        
+        pkt_cnt += 1
+        if time()-last_sec > 1.0:
+            print("Pkt/s", pkt_cnt)
+            pkt_cnt = 0
+            last_sec = time()
