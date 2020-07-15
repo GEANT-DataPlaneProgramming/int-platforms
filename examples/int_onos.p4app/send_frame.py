@@ -23,7 +23,7 @@ src_mac = "00:00:00:00:01:01"
 data = "ABCDFE" 
 src_ip = "10.0.10.10"
 dst_mac = "92:64:a3:10:03:84"
-dst_ip = "10.0.1.1"
+dst_ip = "10.0.2.2"
 
 interface = [i for i in get_if_list() if "eth0" in i][0]
 s = conf.L2socket(iface=interface)

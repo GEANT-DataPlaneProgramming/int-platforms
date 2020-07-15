@@ -104,7 +104,8 @@ def writeRegister(thrift_port, register, idx, value):
 
 
 def setup_start_time():
-    offset = int(time()*1000000)
+    offset = int(time()*1e9)
+    offset -= 500 * 1e6 # substract 500 ms  to compesate a little earlier bmv2 start
     print("Setting time offset %d", offset)
     for port in [22222, 22223, 22224]:
         writeRegister(thrift_port=port, register='start_timestamp', idx=0, value=offset)
