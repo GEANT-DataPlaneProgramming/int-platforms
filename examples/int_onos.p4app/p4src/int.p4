@@ -28,35 +28,52 @@
 #include "include/int_source.p4"
 #include "include/int_transit.p4"
 #include "include/int_sink.p4"
-#include "include/gtp.p4"
 #include "include/forward.p4"
 
+#ifdef BMV2
 
 control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-	
+
+#elif TOFINO
+
+control Ingress(inout headers hdr, inout metadata meta, 
+    /* Intrinsic */
+    in ingress_intrinsic_metadata_t ig_intr_md,
+    in ingress_intrinsic_metadata_from_parser_t ig_prsr_md,
+    inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
+    inout ingress_intrinsic_metadata_for_tm_t ig_tm_md)
+    
+#endif
+    
 	Int_source() int_source;
 	Int_transit() int_transit;
 	Int_sink() int_sink;
 	
-	Gtp_tunnel() gtp;
 	Forward() forward;
 	
 	apply {	
-		
+
+#ifdef BMV2
 		if (!hdr.udp.isValid() && !hdr.tcp.isValid())
 			exit;
-			
+#elif TOFINO
+    //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
+#endif
+
 		int_source.apply(hdr, meta, standard_metadata);
 		int_transit.apply(hdr, meta, standard_metadata);
 		int_sink.apply(hdr, meta, standard_metadata);
 		
-		gtp.apply(hdr, meta, standard_metadata);
-		
 		forward.apply(hdr, meta, standard_metadata);
+        
+#if TOFINO 
+        ig_tm_md.bypass_egress = 1;
+#endif
 	}
 }
 
+#ifdef BMV2
 V1Switch(ParserImpl(), verifyChecksum(), ingress(), egress(), computeChecksum(), DeparserImpl()) main;
-
+#endif
 
 

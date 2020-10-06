@@ -20,7 +20,15 @@
 
 register<bit<64>> (1) start_timestamp;
 
+#ifdef BMV2
+
 control Int_transit(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+
+#elif TOFINO
+
+control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic_metadata_t standard_metadata, in ingress_intrinsic_metadata_from_parser_t imp, inout ingress_intrinsic_metadata_for_tm_t metatm) {
+
+#endif
 
     action configure_transit(bit<32> switch_id, bit<16> l3_mtu) {
         meta.int_metadata.switch_id = switch_id;
@@ -61,10 +69,15 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
     }
     action int_set_header_5() {
         hdr.int_egress_tstamp.setValid();
+        
+        #ifdef BMV2
         start_timestamp.read(hdr.int_egress_tstamp.egress_tstamp, 0);
         bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;
         _timestamp = 1000 * _timestamp;
         hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + _timestamp + 1;
+        #elif TOFINO
+        hdr.int_egress_tstamp.egress_tstamp = (bit<64>)imp.global_tstamp;
+        #endif
     }
     action int_set_header_6() {
         // TODO: implement queue congestion support in BMv2
@@ -78,28 +91,35 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         hdr.int_egress_port_tx_util.egress_port_tx_util = 0;
     }
 
-    @hidden
     action add_1() {
         meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 1;
         meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 4;
     }
 
-    @hidden
     action add_2() {
         meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 2;
         meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 8;
     }
 
-    @hidden
     action add_3() {
         meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 3;
         meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 12;
     }
 
-    @hidden
     action add_4() {
         meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 4;
         meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 16;
+    }
+    
+    
+    action add_5() {
+        meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 5;
+        meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 20;
+    }
+
+    action add_6() {
+        meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 6;
+        meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 24;
     }
 
     action int_set_header_0003_i0() {
@@ -114,7 +134,7 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         add_1();
     }
     action int_set_header_0003_i3() {
-        int_set_header_3();
+        int_set_header_5();
         int_set_header_2();
         add_2();
     }
@@ -248,23 +268,20 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         int_set_header_7();
         int_set_header_5();
         int_set_header_4();
-        add_4();
-        add_1();
+        add_5();
     }
     action int_set_header_0407_i14() {
         int_set_header_6();
         int_set_header_5();
         int_set_header_4();
-        add_3();
-        add_2();
+        add_5();
     }
     action int_set_header_0407_i15() {
         int_set_header_7();
         int_set_header_6();
         int_set_header_5();
         int_set_header_4();
-        add_4();
-        add_2();
+        add_6();
     }
 
     table tb_int_inst_0003 {
@@ -380,9 +397,6 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             int_hop_exceeded();
             return;
         }
-        
-        //if (hdr.ipv4.totalLen + meta.int_metadata.insert_byte_cnt > meta.layer34_metadata.l3_mtu)
-        //    int_mtu_limit_hit();
 
         int_hop_cnt_increment();
 

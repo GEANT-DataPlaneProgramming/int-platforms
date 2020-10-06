@@ -18,7 +18,15 @@
  * limitations under the License.
  */
 
+#ifdef BMV2
+
 control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+
+#elif TOFINO
+
+control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
+
+#endif
 
     action activate_sink() {
         meta.int_metadata.sink = 1w1;
@@ -28,7 +36,11 @@ control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata
             activate_sink;
         }
         key = {
+            #ifdef BMV2
             standard_metadata.egress_port: exact;
+            #elif TOFINO
+            standard_metadata.ucast_egress_port: exact;
+            #endif
         }
         size = 255;
     }

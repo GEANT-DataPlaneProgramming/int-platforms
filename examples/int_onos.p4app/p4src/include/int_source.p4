@@ -18,8 +18,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
+#ifdef BMV2
+
 control Int_source(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+
+#elif TOFINO
+
+control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_metadata_t standard_metadata) {
+
+#endif
 
     action configure_source(bit<8> max_hop, bit<5> ins_cnt, bit<16> ins_mask) {
         hdr.int_shim.setValid();
@@ -45,24 +53,27 @@ control Int_source(inout headers hdr, inout metadata meta, inout standard_metada
         hdr.ipv4.dscp = IPv4_DSCP_INT;   // indicates that INT header in the packet
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + INT_ALL_HEADER_LEN_BYTES;  // adding size of INT headers
         
-        if (hdr.udp.isValid()){
-            hdr.udp.len = hdr.udp.len + INT_ALL_HEADER_LEN_BYTES;
-            hdr.int_tail.dest_port = hdr.udp.dstPort;
-            //hdr.udp.csum = 0;
-        }
-
+        //if (hdr.udp.isValid()){
+        hdr.udp.len = hdr.udp.len + INT_ALL_HEADER_LEN_BYTES;
+        hdr.int_tail.dest_port = hdr.udp.dstPort;
+        //}
     }
+    
     table tb_int_source {
         actions = {
             configure_source;
         }
+        #ifdef BMV2
         key = {
             hdr.ipv4.srcAddr     : ternary;
             hdr.ipv4.dstAddr     : ternary;
             meta.layer34_metadata.l4_src: ternary;
             meta.layer34_metadata.l4_dst: ternary;
         }
+        #endif
         size = 127;
+        default_action =
+            configure_source(4,4, 0x00cc);
     }
 
     action activate_source() {
@@ -72,16 +83,21 @@ control Int_source(inout headers hdr, inout metadata meta, inout standard_metada
         actions = {
             activate_source;
         }
+        #ifdef BMV2
         key = {
             standard_metadata.ingress_port: exact;
         }
+        #endif
         size = 255;
     }
 
 
-    apply {	
+    apply {
+        #ifdef BMV2
         tb_activate_source.apply();
         if (meta.int_metadata.source == 1w1)
+        #endif
+        //TODO: find TOFINO equivalent
             tb_int_source.apply();
     }
 }

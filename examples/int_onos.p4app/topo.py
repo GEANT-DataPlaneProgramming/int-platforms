@@ -50,7 +50,7 @@ class MyTopo(Topo):
                             sw_path = sw_path,
                             json_path = json_path,
                             thrift_port = _THRIFT_BASE_PORT + i,
-                            pcap_dump = True,
+                            pcap_dump = False,
                             device_id = i,
                             enable_debugger = True)
 
@@ -105,7 +105,7 @@ def writeRegister(thrift_port, register, idx, value):
 
 def setup_start_time():
     offset = int(time()*1e9)
-    offset -= 500 * 1e6 # substract 500 ms  to compesate a little earlier bmv2 start
+    offset -= 1000 * 1e6 # substract 1000 ms  to compesate a little earlier bmv2 start
     print("Setting time offset %d", offset)
     for port in [22222, 22223, 22224]:
         writeRegister(thrift_port=port, register='start_timestamp', idx=0, value=offset)
@@ -128,7 +128,7 @@ def main():
                   autoStaticArp=True)
 
     create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
-    create_link_to_external_interface(switch=net.switches[2], external_interface_name='eth2')
+    #create_link_to_external_interface(switch=net.switches[2], external_interface_name='eth2')
 
     net.start()
     

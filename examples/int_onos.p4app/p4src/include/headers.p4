@@ -21,6 +21,13 @@
 #ifndef _HEADERS_P4_
 #define _HEADERS_P4_
 
+#define BMV2 1
+//#define TOFINO 2
+
+#ifdef TOFINO
+const bit<32> PORT_METADATA_SIZE = 32w64;  //TOFINO REQUIREMENTS
+#endif
+
 header ethernet_t {
     bit<48> dstAddr;
     bit<48> srcAddr;
@@ -61,16 +68,6 @@ header tcp_t {
     bit<16> winSize;
     bit<16> csum;
     bit<16> urgPoint;
-}
-
-header gtp_start_t {
-    bit<3>  version;
-    bit<1>  protType;
-    bit<1>  reserved;
-    bit<3>  flags;
-    bit<8>  messageType;
-    bit<16> messageLen;
-    bit<32> teid;
 }
 
 const bit<6> IPv4_DSCP_INT = 0x20;   // indicates that INT header in the packet
@@ -154,10 +151,6 @@ struct int_metadata_t {
     bit<8> int_hdr_word_len;
 }
 
-//struct intrinsic_metadata_t {
-//    bit<48> ingress_timestamp;
-//}
-
 struct layer34_metadata_t {
     bit<32> ip_src;
     bit<32> ip_dst;
@@ -172,7 +165,6 @@ struct layer34_metadata_t {
 
 struct metadata {
     int_metadata_t  int_metadata;
-    //intrinsic_metadata_t intrinsic_metadata;
     layer34_metadata_t   layer34_metadata;
 }
 
@@ -185,8 +177,6 @@ struct headers {
 
     ipv4_t                    enc_ipv4;
     udp_t                     enc_udp;
-
-    gtp_start_t               gtp;
 
     intl4_shim_t          int_shim;
     int_header_t         int_header;
