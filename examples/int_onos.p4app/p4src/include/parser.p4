@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 
 #ifdef BMV2
  
@@ -213,6 +213,8 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
 
 #elif TOFINO
 
+/*********************  I N G R E S S   D E P A R S E R  ************************/
+
 control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
     Checksum() ipv4_csum;
@@ -292,6 +294,38 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
         packet.emit(hdr.int_egress_port_tx_util);
         packet.emit(hdr.int_q_congestion);
         packet.emit(hdr.int_tail);
+    }
+}
+
+
+/*********************  E G R E S S    D E P A R S E R  ************************/
+
+control EgressDeparser(packet_out pkt,
+                                    /* User */
+                                    inout headers                       hdr,
+                                    in    metadata                      meta,
+                                    /* Intrinsic */
+                                    in    egress_intrinsic_metadata_for_deparser_t  eg_dprsr_md) {
+    
+    apply {
+        pkt.emit(hdr.ethernet);
+            pkt.emit(hdr.ipv4);
+            pkt.emit(hdr.udp);
+            pkt.emit(hdr.enc_ipv4);
+            pkt.emit(hdr.tcp);
+            pkt.emit(hdr.enc_udp);
+            pkt.emit(hdr.int_shim);
+            pkt.emit(hdr.int_header);
+            pkt.emit(hdr.int_switch_id);
+            pkt.emit(hdr.int_port_ids);
+            pkt.emit(hdr.int_hop_latency);
+            pkt.emit(hdr.int_q_occupancy);
+            pkt.emit(hdr.int_ingress_tstamp);
+            pkt.emit(hdr.int_egress_tstamp);
+            pkt.emit(hdr.int_egress_port_tx_util);
+            pkt.emit(hdr.int_q_congestion);
+            pkt.emit(hdr.int_tail);
+
     }
 }
 

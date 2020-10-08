@@ -20,8 +20,17 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define BMV2 1
+//#define TOFINO 2
+
 #include <core.p4>
+
+#ifdef BMV2
 #include <v1model.p4>
+#elif TOFINO
+#include <tna.p4>
+#endif
+
 
 #include "include/headers.p4"
 #include "include/parser.p4"
@@ -102,8 +111,32 @@ control Ingress(inout headers hdr, inout metadata meta,
 	}
 }
 
+#if TOFINO 
+control Egress(
+    /* User */
+    inout headers hdr,
+    inout metadata                         meta,
+    /* Intrinsic */    
+    in    egress_intrinsic_metadata_t                  eg_intr_md,
+    in    egress_intrinsic_metadata_from_parser_t      eg_prsr_md,
+    inout egress_intrinsic_metadata_for_deparser_t     eg_dprsr_md,
+    inout egress_intrinsic_metadata_for_output_port_t  eg_oport_md)
+{
+    apply {
+    }
+}
+#endif
+    
+
 #ifdef BMV2
 V1Switch(ParserImpl(), verifyChecksum(), ingress(), egress(), computeChecksum(), DeparserImpl()) main;
+#elif TOFINO
+Pipeline(IngressParser(), Ingress(), IngressDeparser(), EgressParser(), Egress(), EgressDeparser()) pipe;
+Switch(pipe) main;
 #endif
+
+
+
+
 
 
