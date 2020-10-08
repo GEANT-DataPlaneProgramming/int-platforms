@@ -26,7 +26,7 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
 
 #elif TOFINO
 
-control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic_metadata_t standard_metadata, in ingress_intrinsic_metadata_from_parser_t imp, inout ingress_intrinsic_metadata_for_tm_t metatm) {
+control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic_metadata_t standard_metadata, inout ingress_intrinsic_metadata_for_tm_t metatm, in ingress_intrinsic_metadata_from_parser_t imp) {
 
 #endif
 

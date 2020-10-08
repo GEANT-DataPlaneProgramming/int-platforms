@@ -42,7 +42,7 @@
 
 #ifdef BMV2
 
-control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t ig_intr_md) {
 
 #elif TOFINO
 
@@ -64,40 +64,18 @@ control Ingress(inout headers hdr, inout metadata meta,
             //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
         #endif
 
-        Int_source.apply(hdr, meta, 
+        Int_source.apply(hdr, meta, ig_intr_md);
+    
         #ifdef BMV2
-                                 standard_metadata);
+        Int_transit.apply(hdr, meta, ig_intr_md);
         #elif TOFINO
-                                 ig_intr_md);
+        Int_transit.apply(hdr, meta, ig_tm_md, ig_prsr_md);
         #endif
                                  
-        Int_transit.apply(hdr, meta, 
-        #ifdef BMV2
-                                 standard_metadata);
-        #elif TOFINO
-                                 ig_prsr_md, ig_tm_md);
-        #endif
-                                 
-        Int_sink.apply(hdr, meta, 
-        #ifdef BMV2
-                                 standard_metadata);
-        #elif TOFINO
-                                 ig_intr_md);
-        #endif                         
-
-        Forward.apply(hdr, meta, 
-        #ifdef BMV2
-                                 standard_metadata);
-        #elif TOFINO
-                                 ig_intr_md);
-        #endif
-                                 
-        PortForward.apply(hdr, meta, 
-        #ifdef BMV2
-                                 standard_metadata);
-        #elif TOFINO
-                                 ig_intr_md); 
-        #endif
+        Int_sink.apply(hdr, meta, ig_intr_md);    
+        
+        Forward.apply(hdr, meta, ig_intr_md);          
+        PortForward.apply(hdr, meta, ig_intr_md);
         
         #if TOFINO 
         ig_tm_md.bypass_egress = 1;
