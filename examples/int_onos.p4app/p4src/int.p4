@@ -55,12 +55,6 @@ control Ingress(inout headers hdr, inout metadata meta,
     
 #endif
     
-	Int_source() int_source;
-	Int_transit() int_transit;
-	Int_sink() int_sink;
-	
-	Forward() forward;
-	
 	apply {	
 
         #ifdef BMV2
@@ -70,28 +64,28 @@ control Ingress(inout headers hdr, inout metadata meta,
             //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
         #endif
 
-        int_source.apply(hdr, meta, 
+        Int_source.apply(hdr, meta, 
         #ifdef BMV2
                                  standard_metadata);
         #elif TOFINO
                                  ig_intr_md);
         #endif
                                  
-        int_transit.apply(hdr, meta, 
+        Int_transit.apply(hdr, meta, 
         #ifdef BMV2
                                  standard_metadata);
         #elif TOFINO
                                  ig_prsr_md, ig_tm_md);
         #endif
                                  
-        int_sink.apply(hdr, meta, 
+        Int_sink.apply(hdr, meta, 
         #ifdef BMV2
                                  standard_metadata);
         #elif TOFINO
                                  ig_intr_md);
         #endif                         
 
-        forward.apply(hdr, meta, 
+        Forward.apply(hdr, meta, 
         #ifdef BMV2
                                  standard_metadata);
         #elif TOFINO
