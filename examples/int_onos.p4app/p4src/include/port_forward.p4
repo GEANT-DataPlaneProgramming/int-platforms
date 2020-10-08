@@ -20,42 +20,45 @@
  
  #ifdef BMV2
  
-control Forward(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+control PortForward(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 
 #elif TOFINO
 
-control Forward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
+control PortForward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
 
 #endif
 
-    action send_to_cpu(bit<9> port) {
- #ifdef BMV2
-        standard_metadata.egress_spec = port;
-#elif TOFINO
-        ig_tm_md.ucast_egress_port = port; = port;
-#endif
-    }
-    action send_to_port(bit<9> port) {
+    action send(bit<9> port) {
         //standard_metadata.egress_port = port;
-#ifdef BMV2
+        #ifdef BMV2
         standard_metadata.egress_spec = port;
-#elif TOFINO
+        #elif TOFINO
         ig_tm_md.ucast_egress_port = port;
-#endif
+        #endif
+    }
+    action drop() {
+        #ifdef BMV2
+        // TODO mark_to_drop
+        #elif TOFINO
+        ig_dprsr_md.drop_ctl = 1;
+        #endif
     }
 
-    table tb_forward {
+    table tb_port_forward {
         actions = {
-            send_to_cpu;
-            send_to_port;
+            send;
         }
         key = {
-            hdr.ethernet.dstAddr: ternary;
+            #ifdef BMV2
+            standard_metadata.egress_port : exact;
+            #elif TOFINO
+            ig_intr_md.ingress_port : exact; 
+            #endif
         }
         size = 31;
     }
 
     apply {
-        tb_forward.apply();
+        tb_port_forward.apply();
     }
 }

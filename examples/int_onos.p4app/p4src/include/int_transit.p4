@@ -30,12 +30,18 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
 
 #endif
 
+    // Configure parameters of INT transit node:
+    // switch_id which is used within INT node metadata
+    // l3_mtu is curently not used but should allow to detect condition if adding new INT metadata will exceed allowed MTU packet size
     action configure_transit(bit<32> switch_id, bit<16> l3_mtu) {
         meta.int_metadata.switch_id = switch_id;
         meta.int_metadata.insert_byte_cnt = 0;
         meta.int_metadata.int_hdr_word_len = 0;
         meta.layer34_metadata.l3_mtu = l3_mtu;
     }
+    
+    // Table used to configure a switch as a INT transit
+    // If INT transit configured then all packets with INT header will be precessed by INT transit logic
     table tb_int_transit {
         actions = {
             configure_transit;
@@ -326,6 +332,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
         }
         size = 16;
     }
+    
     table tb_int_inst_0407 {
         actions = {
             int_set_header_0407_i0;
@@ -388,11 +395,13 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
 
     apply {	
         
+        // INT transit must process only INT packets
         if (!hdr.int_header.isValid())
             return;
         
         //TODO: check if hop-by-hop INT or destination INT
         
+        // check if INT transit can add a new INT node metadata
         if (hdr.int_header.total_hops == hdr.int_header.max_hops  || hdr.int_header.e == 1) {
             int_hop_exceeded();
             return;
@@ -400,10 +409,12 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
 
         int_hop_cnt_increment();
 
+        // add INT node metadata headers based on INT instruction_mask
         tb_int_transit.apply();
         tb_int_inst_0003.apply();
         tb_int_inst_0407.apply();
         
+        //update length fields in IPv4, UDP and INT
         int_update_ipv4_ac();
 
         if (hdr.udp.isValid())

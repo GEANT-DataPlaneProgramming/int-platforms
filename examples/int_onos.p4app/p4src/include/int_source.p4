@@ -29,6 +29,10 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
 
 #endif
 
+    // Configure parameters of INT source node
+    // max_hop - how many INT nodes can add their INT node metadata
+    // ins_cnt - how many INT headers must be added by a single INT node
+    // ins_mask - instruction_mask defining which information (INT headers types) must added to the packet
     action configure_source(bit<8> max_hop, bit<5> ins_cnt, bit<16> ins_mask) {
         hdr.int_shim.setValid();
         hdr.int_shim.int_type = 1;
@@ -53,12 +57,13 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         hdr.ipv4.dscp = IPv4_DSCP_INT;   // indicates that INT header in the packet
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + INT_ALL_HEADER_LEN_BYTES;  // adding size of INT headers
         
-        //if (hdr.udp.isValid()){
         hdr.udp.len = hdr.udp.len + INT_ALL_HEADER_LEN_BYTES;
         hdr.int_tail.dest_port = hdr.udp.dstPort;
-        //}
     }
     
+    // INT source must be configured per each flow which must be monitored using INT
+    // Flow is defined by src IP, dst IP, src TCP/UDP port, dst TCP/UDP port 
+    // When INT source configured for a flow then a node adds INT shim header and first INT node metadata headers
     table tb_int_source {
         actions = {
             configure_source;
@@ -76,9 +81,12 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
             configure_source(4,4, 0x00cc);
     }
 
+
     action activate_source() {
         meta.int_metadata.source = 1w1;
     }
+    
+    // table used to active INT source for a ingress port of the switch
     table tb_activate_source {
         actions = {
             activate_source;
@@ -94,10 +102,12 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
 
     apply {
         #ifdef BMV2
+        //check if packet appeard on ingress port with active INT source
         tb_activate_source.apply();
         if (meta.int_metadata.source == 1w1)
         #endif
         //TODO: find TOFINO equivalent
+            //apply INT source logic on INT monitored flow
             tb_int_source.apply();
     }
 }

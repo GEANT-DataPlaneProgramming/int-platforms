@@ -29,6 +29,7 @@
 #include "include/int_transit.p4"
 #include "include/int_sink.p4"
 #include "include/forward.p4"
+#include "include/port_forward.p4"
 
 #ifdef BMV2
 
@@ -53,18 +54,47 @@ control Ingress(inout headers hdr, inout metadata meta,
 	
 	apply {	
 
-#ifdef BMV2
+        #ifdef BMV2
 		if (!hdr.udp.isValid() && !hdr.tcp.isValid())
 			exit;
-#elif TOFINO
-    //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
-#endif
+        #elif TOFINO
+            //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
+        #endif
 
-		int_source.apply(hdr, meta, standard_metadata);
-		int_transit.apply(hdr, meta, standard_metadata);
-		int_sink.apply(hdr, meta, standard_metadata);
-		
-		forward.apply(hdr, meta, standard_metadata);
+        int_source.apply(hdr, meta, 
+        #ifdef BMV2
+                                 standard_metadata);
+        #elif TOFINO
+                                 ig_intr_md);
+        #endif
+                                 
+        int_transit.apply(hdr, meta, 
+        #ifdef BMV2
+                                 standard_metadata);
+        #elif TOFINO
+                                 ig_prsr_md, ig_tm_md);
+        #endif
+                                 
+        int_sink.apply(hdr, meta, 
+        #ifdef BMV2
+                                 standard_metadata);
+        #elif TOFINO
+                                 ig_intr_md);
+        #endif                         
+
+        forward.apply(hdr, meta, 
+        #ifdef BMV2
+                                 standard_metadata);
+        #elif TOFINO
+                                 ig_intr_md);
+        #endif
+                                 
+        PortForward.apply(hdr, meta, 
+        #ifdef BMV2
+                                 standard_metadata);
+        #elif TOFINO
+                                 ig_intr_md); 
+        #endif
         
 #if TOFINO 
         ig_tm_md.bypass_egress = 1;

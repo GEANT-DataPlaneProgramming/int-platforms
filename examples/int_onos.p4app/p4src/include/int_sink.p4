@@ -31,6 +31,8 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
     action activate_sink() {
         meta.int_metadata.sink = 1w1;
     }
+    
+    //table used to activate INT sink for particular egress port of the switch
     table tb_activate_sink {
         actions = {
             activate_sink;
@@ -46,6 +48,7 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
     }
 
     apply {
+        // perform INT sink on packet going to egress port for which INT sink was configured
         tb_activate_sink.apply();
         
         // Currently do nothing more - whole packet with INT headers goes to host port for inspection and retieval of INT info
