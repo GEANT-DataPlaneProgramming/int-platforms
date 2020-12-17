@@ -28,18 +28,43 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
 
 #endif
 
-    action activate_sink() {
-        meta.int_metadata.sink = 1w1;
+    action configure_sink() {
+         // restore original headers
+        hdr.ipv4.dscp = hdr.int_tail.dscp;
+        hdr.udp.dstPort = hdr.int_tail.dest_port;
+        bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
+        if (hdr.udp.isValid()) {
+            hdr.udp.len = hdr.udp.len - len_bytes;
+        }
+
+        // remove INT data added in INT sink
+        hdr.int_switch_id.setInvalid();
+        hdr.int_port_ids.setInvalid();
+        hdr.int_ingress_tstamp.setInvalid();
+        hdr.int_egress_tstamp.setInvalid();
+        hdr.int_hop_latency.setInvalid();
+        hdr.int_q_congestion.setInvalid();
+        hdr.int_q_occupancy.setInvalid();
+        hdr.int_egress_port_tx_util.setInvalid();
+        
+        // remove int data
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_data.setInvalid();
+        hdr.int_tail.setInvalid();
+        
+
     }
     
     //table used to activate INT sink for particular egress port of the switch
-    table tb_activate_sink {
+    table tb_int_sink {
         actions = {
-            activate_sink;
+            configure_sink;
         }
         key = {
             #ifdef BMV2
-            standard_metadata.egress_port: exact;
+            standard_metadata.egress_spec: exact;
             #elif TOFINO
             standard_metadata.ucast_egress_port: exact;
             #endif
@@ -48,9 +73,12 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
     }
 
     apply {
+    
+        // INT sink must process only INT packets
+        if (!hdr.int_header.isValid())
+            return;
+            
         // perform INT sink on packet going to egress port for which INT sink was configured
-        tb_activate_sink.apply();
-        
-        // Currently do nothing more - whole packet with INT headers goes to host port for inspection and retieval of INT info
+        tb_int_sink.apply();
     }
 }

@@ -28,32 +28,20 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
 parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out ingress_intrinsic_metadata_t standard_metadata) {
 
 #endif
-
-    state parse_enc_ipv4 {
-        packet.extract(hdr.enc_ipv4);
-        meta.layer34_metadata.ip_src = hdr.enc_ipv4.srcAddr;
-        meta.layer34_metadata.ip_dst = hdr.enc_ipv4.dstAddr;
-        meta.layer34_metadata.ip_ver = 8w4;
-        meta.layer34_metadata.dscp = hdr.enc_ipv4.dscp;
-        transition select(hdr.enc_ipv4.protocol) {
-            8w0x11: parse_enc_udp;
-            8w0x6: parse_tcp;
-            default: accept;
-        }
+    state parse_int_tail {
+        packet.extract(hdr.int_tail);
+        transition accept;
     }
-    state parse_enc_udp {
-        packet.extract(hdr.enc_udp);
-        meta.layer34_metadata.l4_src = hdr.enc_udp.srcPort;
-        meta.layer34_metadata.l4_dst = hdr.enc_udp.dstPort;
-        meta.layer34_metadata.l4_proto = 8w0x11;
-        transition select(meta.layer34_metadata.dscp) {
-            6w0x20: parse_int_shim;
-            default: accept;
-        }
+    state parse_int_data {
+        bit<8> int_headers_len_in_words = (bit<8>)(INT_ALL_HEADER_LEN_BYTES)>>2;
+        bit<32> int_data_len_in_words = (bit<32>)(hdr.int_shim.len - int_headers_len_in_words);
+        bit<32> int_data_len_in_bits =  int_data_len_in_words << 5;
+        packet.extract(hdr.int_data, int_data_len_in_bits);
+        transition parse_int_tail;
     }
     state parse_int_header {
         packet.extract(hdr.int_header);
-        transition accept;
+        transition parse_int_data;
     }
     state parse_int_shim {
         packet.extract(hdr.int_shim);
@@ -121,9 +109,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.udp);
-        packet.emit(hdr.enc_ipv4);
         packet.emit(hdr.tcp);
-        packet.emit(hdr.enc_udp);
         
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
@@ -137,6 +123,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_egress_port_tx_util);
         packet.emit(hdr.int_q_congestion);
         
+        packet.emit(hdr.int_data);
         packet.emit(hdr.int_tail);
     }
 }
@@ -324,6 +311,7 @@ control EgressDeparser(packet_out pkt,
             pkt.emit(hdr.int_egress_tstamp);
             pkt.emit(hdr.int_egress_port_tx_util);
             pkt.emit(hdr.int_q_congestion);
+            pkt.emit(hdr.int_data);
             pkt.emit(hdr.int_tail);
 
     }

@@ -6,6 +6,8 @@
 			"program": "topo.py"
 		},
 		"multiswitch": {
+            "bmv2_log": true,
+            "pcap_dump": true,
 			"links": [["h1", "s1"], ["s1", "s2"], ["s2", "h2", 50]],
 			"hosts": {
 				"h1": {

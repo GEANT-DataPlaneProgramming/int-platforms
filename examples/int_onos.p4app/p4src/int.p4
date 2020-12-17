@@ -71,11 +71,12 @@ control Ingress(inout headers hdr, inout metadata meta,
         #elif TOFINO
         Int_transit.apply(hdr, meta, ig_tm_md, ig_prsr_md);
         #endif
-                                 
-        Int_sink.apply(hdr, meta, ig_intr_md);    
         
         Forward.apply(hdr, meta, ig_intr_md);          
         PortForward.apply(hdr, meta, ig_intr_md);
+        
+        // egress_port need to be set
+        Int_sink.apply(hdr, meta, ig_intr_md);    
         
         #if TOFINO 
         ig_tm_md.bypass_egress = 1;

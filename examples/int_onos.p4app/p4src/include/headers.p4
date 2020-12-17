@@ -76,9 +76,9 @@ const bit<16> INT_SHIM_HEADER_LEN_BYTES = 4;
 header intl4_shim_t {
     bit<8> int_type;
     bit<8> rsvd1;
-    bit<8> len;
-    bit<6> dscp;
-    bit<2> rsvd2;
+    bit<8> len;   // the length of all INT headers in 4-byte words
+    bit<6> rsvd2;  // dscp not put here
+    bit<2> rsvd3;
 }
 
 const bit<16> INT_HEADER_LEN_BYTES = 8;
@@ -168,15 +168,16 @@ struct metadata {
     layer34_metadata_t   layer34_metadata;
 }
 
+header int_data_t {
+    varbit<2048> data;
+}
+
 
 struct headers {
     ethernet_t                ethernet;
     ipv4_t                    ipv4;
     tcp_t                     tcp;
     udp_t                     udp;
-
-    ipv4_t                    enc_ipv4;
-    udp_t                     enc_udp;
 
     intl4_shim_t          int_shim;
     int_header_t         int_header;
@@ -190,6 +191,8 @@ struct headers {
     int_q_congestion_t           int_q_congestion;
     int_q_occupancy_t           int_q_occupancy;
     int_switch_id_t                int_switch_id;
+    
+    int_data_t                  int_data;
 }
 
 

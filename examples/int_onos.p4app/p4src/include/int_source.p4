@@ -36,7 +36,7 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
     action configure_source(bit<8> max_hop, bit<5> ins_cnt, bit<16> ins_mask) {
         hdr.int_shim.setValid();
         hdr.int_shim.int_type = 1;
-        hdr.int_shim.len = (bit<8>)INT_SHIM_HEADER_LEN_BYTES;
+        hdr.int_shim.len = (bit<8>)INT_ALL_HEADER_LEN_BYTES>>2;
         
         hdr.int_header.setValid();
         hdr.int_header.ver = 1;
