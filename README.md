@@ -1,5 +1,21 @@
+P4 INT implementation for bvm2 switches running within mininet environment.
+===========================================================================
+
+This is P4 implementation of the In-band Network Telemetry. The P4 INT is deployed using testbed composed of three bmv2 switches running within Mininet virtual enviroment.
+The whole environment is provided basing on p4app solution (https://github.com/p4lang/p4app).
+
+P4 INT
+------
+
+This project contains a few flavors of INT implementation:
+- examples/int_onos.p4app - currently most tested version compatible with INT implementation contained in the ONOS network operating system.
+- examples/int.p4app - initial implementation of INT v1.5 (develepment suspended, not well tested)
+
+Additionally this repo contains also:
+- examples/twamp_reflector.p4app - TWAMP reflector implementation in P4 (not related to INT).
+
 p4app
-=====
+-----
 
 p4app is a tool that can build, run, debug, and test P4 programs. The
 philosophy behind p4app is "easy things should be easy" - p4app is designed to
@@ -29,15 +45,14 @@ supporting files, and a `p4app.json` file that tells p4app how to run it.
 Here's how you can run it:
 
 ```
-p4app run examples/hh.p4app
+p4app run examples/int_onos.p4app
 ```
 
 If you run this command, you'll find yourself at a Mininet command prompt. p4app
 will automatically download a Docker image containing the P4 compiler and tools,
-compile `countmin.p4`, and set up a container with a simulated network you
+compile P4 code, and set up a container with a simulated network you
 can use to experiment. In addition to Mininet itself, you can use `tshark`,
 `scapy`, and the net-tools and nmap suites right out of the box.
-
 
 That's pretty much it! There's one more useful command, though. p4app caches the
 P4 compiler and tools locally, so you don't have to redownload them every time,
@@ -105,17 +120,7 @@ Testbed and implementation details
 Our emulation environment is composed by three switches emulated with Mininet. The adopted triangular topology is shown below. Each switch connects to a host, and the flows in the network are identified by {srcIP, dstIP} pairs.
 ![](https://raw.githubusercontent.com/p4lang/tutorials/master/exercises/basic_tunnel/topo.png)
 
-To implement Count-min Sketch, we used four one-dimensional 30-slots registers. We chose `xxhash` to implement the needed pairwise-independent hash functions, and each register uses a different `xxhash` function depending on the index of registers.
 
-To perform the query operation on the sketch, we set a `count_min` variable to the queried value for the first register (associated to the index of the first hashed value). Consequently, the queried value for the remaining registers is compared with `count_min`. If  the queried value for a register is smaller than current `count_min` value, then `count_min` value is updated accordingly. The final `count_min` value is thus the packet count estimation for the queried flow.
-
-Additionally, all registers in the switch can be read by using the `./read_registers.sh` script: registers 1 to 4 represent the rows of Count-min Sketch.
-
-```
-    ./read_registers1.sh
-    ./read_registers2.sh
-    ./read_registers3.sh
-```
 
 The debug mode for each switch can be enabled by using:
 
