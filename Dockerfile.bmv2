@@ -1,0 +1,35 @@
+#FROM p4lang/behavioral-model:latest
+FROM p4lang/p4c:latest
+
+# Install dependencies and some useful tools.
+ENV NET_TOOLS iputils-arping \
+              iputils-ping \
+              iputils-tracepath \
+              net-tools \
+              nmap \
+              python3 \
+              python-ipaddr \
+              python-scapy \
+              python3-six \
+              python3-construct \
+              tcpdump \
+              traceroute \
+              tshark
+ENV DEV_TOOLS nano
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends $NET_TOOLS $DEV_TOOLS
+
+# Ignore questions when installing with apt-get:
+ENV DEBIAN_FRONTEND noninteractive
+
+
+#COPY v1model.p4 /usr/local/share/p4c/p4include 
+# Install the scripts we use to run and test P4 apps.
+COPY ./examples /examples
+COPY ./single_bmv2 /examples/single_bmv2
+WORKDIR /examples
+
+RUN p4c --target bmv2 --arch v1model --std p4-16 /examples/int_onos.p4app/p4src/int.p4
+CMD ./single_bmv2/start.sh
+

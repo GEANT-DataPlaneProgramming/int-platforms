@@ -1,0 +1,16 @@
+version: "3.3"
+services:
+  bmv:
+    build:
+      context: .
+      dockerfile: Dockerfile.bmv2
+    networks:
+      - macvlan_tap0
+      - veth1-bmv2-macvlan
+    ports:
+      - "9090:9090"  # Thrift port of the bmv2 switch
+networks:
+  macvlan_tap0:
+   external: true
+  veth1-bmv2-macvlan:
+    external: true
