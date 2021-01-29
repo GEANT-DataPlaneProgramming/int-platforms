@@ -21,16 +21,24 @@ from mininet.cli import CLI
 from mininet.link import Intf
 from mininet.util import quietRun
 
-
 from p4_mininet import P4Switch, P4Host
 
 import argparse
-from time import sleep, time
 import os
 import subprocess
+import threading
+import re
+import sys
+import time
 
 _THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 _THRIFT_BASE_PORT = 22222
+
+
+CONTROL_CPU_IP = "10.0.0.254"
+CONTROL_CPU_MAC = 'f6:61:c0:6a:14:66'
+CONTROL_DP_MAC = 'f6:61:c0:6a:00:77'
+
 
 parser = argparse.ArgumentParser(description='Mininet demo')
 parser.add_argument('--behavioral-exe', help='Path to behavioral executable',
@@ -104,7 +112,7 @@ def writeRegister(thrift_port, register, idx, value):
 
 
 def setup_start_time():
-    offset = int(time()*1e9)
+    offset = int(time.time()*1e9)
     offset -= 1000 * 1e6 # substract 1000 ms  to compesate a little earlier bmv2 start
     print("Setting time offset %d", offset)
     for port in [22222, 22223, 22224]:
@@ -114,6 +122,40 @@ def create_link_to_external_interface(switch, external_interface_name):
     print  '*** Adding hardware interface', external_interface_name, 'to switch', switch.name, '\n'
     _intf = Intf(external_interface_name, node=switch)
 
+def create_dp_cpu_link(switch, cpu_mac, cpu_ip, dp_mac):
+    # add interface for packet-in and packet-out between switch DataPlane and switch CPU 
+    quietRun( 'ip link add name veth_dp type veth peer name veth_cpu', shell=True )
+    quietRun( 'ip netns add ns1', shell=True )
+    quietRun( 'sudo ip link set veth_cpu netns ns1', shell=True )
+    quietRun( 'ip netns exec ns1 ifconfig veth_cpu hw ether %s' % cpu_mac, shell=True )
+    quietRun( 'ifconfig veth_dp hw ether %s' % dp_mac, shell=True )
+    quietRun( 'ip link set dev veth_dp up', shell=True )
+    quietRun( 'ip netns exec ns1 ip link set dev veth_cpu up', shell=True )
+    for off in "rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash".split(' '):
+        quietRun( '/sbin/ethtool --offload veth_dp %s off' % off, shell=True )
+        quietRun( 'ip netns exec ns1 /sbin/ethtool --offload veth_cpu %s off' % off, shell=True )
+    quietRun( 'ip netns exec ns1 ifconfig veth_cpu %s/24' % cpu_ip, shell=True )
+    
+    quietRun( 'ip netns exec ns1 ip route add default via %s' % cpu_ip, shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.all.disable_ipv6=1', shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.default.disable_ipv6=1', shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.lo.disable_ipv6=1', shell=True )
+    quietRun( 'ip netns exec ns1 sysctl -w net.ipv4.tcp_congestion_control=reno', shell=True )
+    
+    # add additional veth in order to allow access to bmv2 thrift API
+    quietRun( 'ip link add name veth_dp_api type veth peer name veth_cpu_api', shell=True )
+    quietRun( 'sudo ip link set veth_cpu_api netns ns1', shell=True )
+    quietRun( 'ip netns exec ns1 ifconfig veth_cpu_api %s/24' % '192.168.0.254', shell=True )
+    quietRun( 'ip netns exec ns1 ip route add 172.17.0.0/16 dev veth_cpu_api' , shell=True )
+    quietRun( 'ip netns exec ns1 ip link set dev veth_cpu_api up', shell=True )
+    quietRun( 'ifconfig veth_dp_api %s/24' % '192.168.0.2', shell=True )
+    quietRun( 'ip link set dev veth_dp_api up', shell=True )
+    
+    _intf = Intf('veth_dp', node=switch) 
+    veth_dp_port = switch.intfNames().index('veth_dp')
+    print  '*** Adding hardware interface', 'veth_dp', 'to switch', switch.name, 'with port index', veth_dp_port, '\n'
+    return veth_dp_port
+    
 
 def main():
     nb_hosts, nb_switches, links = read_topo()
@@ -127,8 +169,10 @@ def main():
                   controller = None,
                   autoStaticArp=True)
 
-    #create_link_to_external_interface(switch=net.switches[0], external_interface_name='eth1')
+    create_link_to_external_interface(switch=net.switches[1], external_interface_name='eth1')
     #create_link_to_external_interface(switch=net.switches[2], external_interface_name='eth2')
+    
+    veth_dp_port = create_dp_cpu_link(switch=net.switches[2], cpu_mac=CONTROL_CPU_MAC, cpu_ip=CONTROL_CPU_IP, dp_mac=CONTROL_DP_MAC)
 
     net.start()
     
@@ -147,7 +191,7 @@ def main():
         h.cmd("sysctl -w net.ipv4.tcp_congestion_control=reno")
         h.cmd("iptables -I OUTPUT -p icmp --icmp-type destination-unreachable -j DROP")
 
-    sleep(1)
+    time.sleep(1)
 
     for i in xrange(nb_switches):
         cmd = [args.cli, "--json", args.json,
@@ -169,7 +213,7 @@ def main():
         s.cmd("sysctl -w net.ipv4.tcp_congestion_control=reno")
         s.cmd("iptables -I OUTPUT -p icmp --icmp-type destination-unreachable -j DROP")
 
-    sleep(1)
+    time.sleep(1)
     print "Ready !"
 
     CLI( net )
