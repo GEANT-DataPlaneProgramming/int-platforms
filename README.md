@@ -4,15 +4,22 @@ P4 INT implementation for bvm2 switches running within mininet environment.
 This is P4 implementation of the In-band Network Telemetry. The P4 INT is deployed using testbed composed of three bmv2 switches running within Mininet virtual enviroment.
 The whole environment is provided basing on p4app solution (https://github.com/p4lang/p4app).
 
+The INT implementation and testing was done within the GÉANT Data Plane Programmibilty activity:
+* website will be published soon
+
 P4 INT
 ------
 
 This project contains a few flavors of INT implementation:
-- examples/int_onos.p4app - currently most tested version compatible with INT implementation contained in the ONOS network operating system.
-- examples/int.p4app - initial implementation of INT v1.5 (develepment suspended, not well tested)
+- int_versions/int_v0.4.p4app - currently most tested version of INT; it is compatible with INT implementation contained in the ONOS network operating system
+- int_versions/int_v1.5.p4app - initial implementation of INT v1.5 done accordingly very initial v2.0 specification  (develepment paused, not well tested)
+
+Future plans assumes an implementation of v1.0 and latest version 2.x of the INT specification.
 
 Additionally this repo contains also:
-- examples/twamp_reflector.p4app - TWAMP reflector implementation in P4 (not related to INT).
+- int_versions/twamp_reflector.p4app - TWAMP reflector implementation in P4 (not related to INT).
+
+All INT code use Apache 2.0 licence.
 
 p4app
 -----
@@ -139,3 +146,10 @@ The  terminal for each host are available by using:
 ```    
 
 The resulted logs and pcap files are in `/tmp/p4app_logs`
+
+
+Contact
+---------
+int-discuss@lists.geant.org
+
+

@@ -1,1 +1,1 @@
-p4app run examples/int_onos.p4app
+p4app run int_versions/int_v0.4.p4app
