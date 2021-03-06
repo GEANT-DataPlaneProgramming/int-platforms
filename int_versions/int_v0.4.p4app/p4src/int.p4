@@ -65,15 +65,15 @@ control Ingress(inout headers hdr, inout metadata meta,
         #endif
 
         Int_source.apply(hdr, meta, ig_intr_md);
-    
+        
+        Forward.apply(hdr, meta, ig_intr_md);          
+        PortForward.apply(hdr, meta, ig_intr_md);
+        
         #ifdef BMV2
         Int_transit.apply(hdr, meta, ig_intr_md);
         #elif TOFINO
         Int_transit.apply(hdr, meta, ig_tm_md, ig_prsr_md);
         #endif
-        
-        Forward.apply(hdr, meta, ig_intr_md);          
-        PortForward.apply(hdr, meta, ig_intr_md);
         
         // egress_port need to be set
         Int_sink.apply(hdr, meta, ig_intr_md);    
