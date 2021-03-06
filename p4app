@@ -59,7 +59,7 @@ function run-p4app {
             -v "/tmp/p4app_logs2":/tmp/p4app_logs2 \
              $P4APP_CONTAINER_ARGS \
              $P4APP_IMAGE $APP_TO_RUN "${@:2}"
-  docker network connect macvlan_tap0 "$P4APP_NAME" 
+  #docker network connect macvlan_tap0 "$P4APP_NAME" 
   #docker network connect macvlan_tap1 "$P4APP_NAME" 
   docker start --interactive  "$P4APP_NAME" 
   

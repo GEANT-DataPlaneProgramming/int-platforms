@@ -169,7 +169,7 @@ def main():
                   controller = None,
                   autoStaticArp=True)
 
-    create_link_to_external_interface(switch=net.switches[1], external_interface_name='eth1')
+    #create_link_to_external_interface(switch=net.switches[1], external_interface_name='eth1')
     #create_link_to_external_interface(switch=net.switches[2], external_interface_name='eth2')
     
     veth_dp_port = create_dp_cpu_link(switch=net.switches[2], cpu_mac=CONTROL_CPU_MAC, cpu_ip=CONTROL_CPU_IP, dp_mac=CONTROL_DP_MAC)
