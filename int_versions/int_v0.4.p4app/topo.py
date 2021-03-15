@@ -36,8 +36,10 @@ _THRIFT_BASE_PORT = 22222
 
 
 CONTROL_CPU_IP = "10.0.0.254"
-CONTROL_CPU_MAC = 'f6:61:c0:6a:14:66'
-CONTROL_DP_MAC = 'f6:61:c0:6a:00:77'
+CONTROL_INT_COLLECTOR_MAC = 'f6:61:c0:6a:14:21'
+
+# install additional libraries
+os.system("dpkg -i /tmp/libraries/bridge-utils_1.5-13+deb9u1_amd64.deb")
 
 
 parser = argparse.ArgumentParser(description='Mininet demo')
@@ -121,39 +123,86 @@ def setup_start_time():
 def create_link_to_external_interface(switch, external_interface_name):
     print  '*** Adding hardware interface', external_interface_name, 'to switch', switch.name, '\n'
     _intf = Intf(external_interface_name, node=switch)
+    
 
-def create_dp_cpu_link(switch, cpu_mac, cpu_ip, dp_mac):
-    # add interface for packet-in and packet-out between switch DataPlane and switch CPU 
-    quietRun( 'ip link add name veth_dp type veth peer name veth_cpu', shell=True )
-    quietRun( 'ip netns add ns1', shell=True )
-    quietRun( 'sudo ip link set veth_cpu netns ns1', shell=True )
-    quietRun( 'ip netns exec ns1 ifconfig veth_cpu hw ether %s' % cpu_mac, shell=True )
-    quietRun( 'ifconfig veth_dp hw ether %s' % dp_mac, shell=True )
-    quietRun( 'ip link set dev veth_dp up', shell=True )
-    quietRun( 'ip netns exec ns1 ip link set dev veth_cpu up', shell=True )
+def quietRunNs(command, namespace='ns_int', display=True):
+    if display:
+        print "Namespace %s: %s" % (namespace, command)
+    quietRun('ip netns exec %s %s' % (namespace, command), shell=True )
+    
+def _quietRun(command):
+    print command
+    quietRun( command, shell=True )
+    
+def create_int_collection_network(switches):
+    '''
+    Create a INT collection network composed of a bridge, virtual links to each p4 switch and virtual link to the INT collector
+    '''
+    print "..... CREATING INT COLLECTION NETWORK  ........"
+    # INT collection infrastructure resides within 'ns1' namespace
+    _quietRun( 'ip netns add ns_int')
+    
+    #create bridge acting as hub
+    bridge_name = 'int_collection'
+    quietRunNs( 'brctl addbr %s' % bridge_name)
+    quietRunNs( 'brctl stp %s off' % bridge_name)
+    quietRunNs( 'brctl setageing %s 0' % bridge_name)
+    quietRunNs( 'brctl setfd %s 0' % bridge_name)
+    
+    create_int_collector_link(bridge_name)
+    
+    for id, switch in enumerate(switches):
+        print "Adding switch id %d" % id 
+        create_dp_cpu_link(id, switch, bridge_name)
+
+    quietRunNs( 'ip link set up dev %s' % bridge_name)
+ 
+def create_int_collector_link(bridge_name):
+    '''
+    Add virtual link for the INT collector
+    '''
+    _quietRun( 'ip link add name int_bridge type veth peer name int_collector')
+    _quietRun( 'ip link set int_bridge netns ns_int')
+    _quietRun( 'ip link set int_collector netns ns_int')
+
+    quietRunNs( 'ifconfig int_collector hw ether %s' % CONTROL_INT_COLLECTOR_MAC)
+    quietRunNs( 'ip link set dev int_bridge up')
+    quietRunNs( 'ip link set dev int_collector up')
     for off in "rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash".split(' '):
-        quietRun( '/sbin/ethtool --offload veth_dp %s off' % off, shell=True )
-        quietRun( 'ip netns exec ns1 /sbin/ethtool --offload veth_cpu %s off' % off, shell=True )
-    quietRun( 'ip netns exec ns1 ifconfig veth_cpu %s/24' % cpu_ip, shell=True )
+        quietRunNs( '/sbin/ethtool --offload int_bridge %s off' % off, display=False)
+        quietRunNs( '/sbin/ethtool --offload int_collector %s off' % off, display=False)    
+    quietRunNs( 'ifconfig int_collector %s/24' % CONTROL_CPU_IP)
     
-    quietRun( 'ip netns exec ns1 ip route add default via %s' % cpu_ip, shell=True )
-    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.all.disable_ipv6=1', shell=True )
-    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.default.disable_ipv6=1', shell=True )
-    quietRun( 'ip netns exec ns1 sysctl -w net.ipv6.conf.lo.disable_ipv6=1', shell=True )
-    quietRun( 'ip netns exec ns1 sysctl -w net.ipv4.tcp_congestion_control=reno', shell=True )
+    quietRunNs( 'sysctl -w net.ipv6.conf.int_bridge.disable_ipv6=1')
+    quietRunNs( 'sysctl -w net.ipv6.conf.int_collector.disable_ipv6=1')
     
-    # add additional veth in order to allow access to bmv2 thrift API
-    quietRun( 'ip link add name veth_dp_api type veth peer name veth_cpu_api', shell=True )
-    quietRun( 'sudo ip link set veth_cpu_api netns ns1', shell=True )
-    quietRun( 'ip netns exec ns1 ifconfig veth_cpu_api %s/24' % '192.168.0.254', shell=True )
-    quietRun( 'ip netns exec ns1 ip route add 172.17.0.0/16 dev veth_cpu_api' , shell=True )
-    quietRun( 'ip netns exec ns1 ip link set dev veth_cpu_api up', shell=True )
-    quietRun( 'ifconfig veth_dp_api %s/24' % '192.168.0.2', shell=True )
-    quietRun( 'ip link set dev veth_dp_api up', shell=True )
+    quietRunNs('brctl addif %s int_bridge' % bridge_name)
+
     
-    _intf = Intf('veth_dp', node=switch) 
-    veth_dp_port = switch.intfNames().index('veth_dp')
-    print  '*** Adding hardware interface', 'veth_dp', 'to switch', switch.name, 'with port index', veth_dp_port, '\n'
+def create_dp_cpu_link(id, switch, bridge_name):
+    '''
+    Add virtual link within the INT collection network for each p4 switch
+    '''
+    _quietRun( 'ip link add name veth_dp_%i type veth peer name veth_cpu_%i' % (id, id))
+    
+    dp_mac = 'f6:61:c0:6a:00:0%i' % id
+
+    _quietRun( 'ip link set veth_cpu_%i netns ns_int' % id)
+    _quietRun( 'ifconfig veth_dp_%i hw ether %s' % (id, dp_mac))
+    _quietRun( 'ip link set dev veth_dp_%i up' % id)
+    quietRunNs( 'ip link set dev veth_cpu_%i up' % id)
+    for off in "rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash".split(' '):
+        quietRun( '/sbin/ethtool --offload veth_dp_%i %s off' % (id, off))
+        quietRunNs( '/sbin/ethtool --offload veth_cpu_%i %s off' % (id, off), display=False)
+    
+    quietRunNs( 'sysctl -w net.ipv6.conf.veth_dp_%i.disable_ipv6=1' % id)
+    quietRunNs( 'sysctl -w net.ipv6.conf.veth_cpu_%i.disable_ipv6=1' % id)
+    
+    quietRunNs('brctl addif %s veth_cpu_%i' % (bridge_name, id))
+    
+    _intf = Intf('veth_dp_%i' % id, node=switch) 
+    veth_dp_port = switch.intfNames().index('veth_dp_%i' % id)
+    print  '*** Adding hardware interface', 'veth_dp_%i' % id, 'to switch', switch.name, 'with port index', veth_dp_port, '\n'
     return veth_dp_port
     
 
@@ -172,7 +221,7 @@ def main():
     #create_link_to_external_interface(switch=net.switches[1], external_interface_name='eth1')
     #create_link_to_external_interface(switch=net.switches[2], external_interface_name='eth2')
     
-    veth_dp_port = create_dp_cpu_link(switch=net.switches[1], cpu_mac=CONTROL_CPU_MAC, cpu_ip=CONTROL_CPU_IP, dp_mac=CONTROL_DP_MAC)
+    create_int_collection_network(net.switches)
 
     net.start()
     

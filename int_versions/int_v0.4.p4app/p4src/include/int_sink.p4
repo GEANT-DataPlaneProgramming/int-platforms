@@ -19,9 +19,9 @@
  */
 
 
-const bit<48> COLLECTOR_MAC = 0xf661c06a1466;
+const bit<48> COLLECTOR_MAC = 0xf661c06a1421; 
 const bit<32> COLLECTOR_IP = 0x0a0000fe;
-const bit<48> DP_MAC =  0xf661c06a0077;
+const bit<48> DP_MAC =  0xf661c06a0001;
 const bit<32> INT_REPORT_MIRROR_SESSION_ID = 1;   // mirror session specyfing egress_port for cloned INT report packets, defined by switch CLI command   
 
 #ifdef BMV2
@@ -103,6 +103,20 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
     }
     
     
+    action send_report(bit<48> dp_mac, bit<48> collector_mac, bit<32> collector_ip)
+    {
+        // frame to INT collector requires proper MAC and IP addresses
+        hdr.ethernet.srcAddr = dp_mac;
+        hdr.ethernet.dstAddr = collector_mac;
+        hdr.ipv4.dstAddr = collector_ip;
+    }
+    
+    table tb_int_reporting {
+        actions = {
+            send_report;
+        }
+    }
+    
     apply {
     
         // INT sink must process only INT packets
@@ -115,13 +129,14 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE) {
             
             // prepare INT report
-            //standard_metadata.egress_port = meta.int_metadata.sink_reporting_port;
-            //standard_metadata.egress_spec = meta.int_metadata.sink_reporting_port;
    
-            // frame to INT collector requires proper MAC and IP addresses
-            hdr.ethernet.srcAddr = DP_MAC;
-            hdr.ethernet.dstAddr = COLLECTOR_MAC;
-            hdr.ipv4.dstAddr = COLLECTOR_IP;
+            // send frame to INT collector
+            tb_int_reporting.apply();
+            
+            //hdr.ethernet.srcAddr = DP_MAC;
+            //hdr.ethernet.dstAddr = COLLECTOR_MAC;
+            //hdr.ipv4.dstAddr = COLLECTOR_IP;
+            
             // TODO
         }
 

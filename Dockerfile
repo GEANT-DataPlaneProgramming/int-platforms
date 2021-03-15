@@ -15,7 +15,9 @@ ENV NET_TOOLS iputils-arping \
               tcpdump \
               traceroute \
               tshark \ 
-              golang-go
+              golang-go \
+              bridge-utils
+              
 ENV MININET_DEPS automake \
                  build-essential \
                  cgroup-bin \

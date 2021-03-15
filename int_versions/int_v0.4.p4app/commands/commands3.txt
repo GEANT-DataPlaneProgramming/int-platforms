@@ -1,4 +1,9 @@
 table_add tb_activate_source activate_source 1 =>
 table_add tb_int_source configure_source 10.0.30.30&&&0xFFFFFFFF 10.0.2.2&&&0xFFFFFFFF 0x11FF&&&0xFFFF 0x22FF&&&0xFFFF => 4 2 0xC0 0
+
+table_add tb_int_sink configure_sink 1 => 4
+mirroring_add 1 4
+table_add tb_int_reporting send_report => f6:61:c0:6a:00:02  f6:61:c0:6a:14:21  10.0.0.254
+
 table_add tb_int_transit configure_transit => 3 1500
 table_add tb_forward send_to_port 26:82:e5:03:8f:6e&&&0xFFFFFFFF => 4 10
