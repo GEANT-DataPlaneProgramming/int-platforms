@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright 2020 PSNC
  *
  * Author: Damian Parniewicz
@@ -18,6 +18,53 @@
  * limitations under the License.
  */
 
+
+const bit<48> COLLECTOR_MAC = 0xf661c06a1466;
+const bit<32> COLLECTOR_IP = 0x0a0000fe;
+const bit<48> DP_MAC =  0xf661c06a0077;
+const bit<32> INT_REPORT_MIRROR_SESSION_ID = 1;   // mirror session specyfing egress_port for cloned INT report packets, defined by switch CLI command   
+
+#ifdef BMV2
+
+control Int_sink_config(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+
+#elif TOFINO
+
+control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
+
+#endif
+    
+    action configure_sink(bit<9> sink_reporting_port) {
+        meta.int_metadata.remove_int = 1w1;   // indicate that INT headers must be removed in egress
+        meta.int_metadata.sink_reporting_port = sink_reporting_port; 
+        clone3<metadata>(CloneType.I2E, INT_REPORT_MIRROR_SESSION_ID, meta);
+    }
+    
+   //table used to activate INT sink for particular egress port of the switch
+    table tb_int_sink {
+        actions = {
+            configure_sink;
+        }
+        key = {
+            #ifdef BMV2
+            standard_metadata.egress_spec: exact;
+            #elif TOFINO
+            standard_metadata.ucast_egress_port: exact;
+            #endif
+        }
+        size = 255;
+    }
+    
+    apply {
+       // INT sink must process only INT packets
+        if (!hdr.int_header.isValid())
+            return;
+        
+        tb_int_sink.apply();
+    }
+}
+
+
 #ifdef BMV2
 
 control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
@@ -27,8 +74,8 @@ control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata
 control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
 
 #endif
-
-    action configure_sink() {
+    
+    action remove_sink_header() {
          // restore original headers
         hdr.ipv4.dscp = hdr.int_tail.dscp;
         hdr.udp.dstPort = hdr.int_tail.dest_port;
@@ -53,32 +100,30 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
         hdr.int_header.setInvalid();
         hdr.int_data.setInvalid();
         hdr.int_tail.setInvalid();
-        
-
     }
     
-    //table used to activate INT sink for particular egress port of the switch
-    table tb_int_sink {
-        actions = {
-            configure_sink;
-        }
-        key = {
-            #ifdef BMV2
-            standard_metadata.egress_spec: exact;
-            #elif TOFINO
-            standard_metadata.ucast_egress_port: exact;
-            #endif
-        }
-        size = 255;
-    }
-
+    
     apply {
     
         // INT sink must process only INT packets
         if (!hdr.int_header.isValid())
             return;
+        
+        if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL && meta.int_metadata.remove_int == 1) {
+            remove_sink_header();
+        }
+        if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE) {
             
-        // perform INT sink on packet going to egress port for which INT sink was configured
-        tb_int_sink.apply();
+            // prepare INT report
+            //standard_metadata.egress_port = meta.int_metadata.sink_reporting_port;
+            //standard_metadata.egress_spec = meta.int_metadata.sink_reporting_port;
+   
+            // frame to INT collector requires proper MAC and IP addresses
+            hdr.ethernet.srcAddr = DP_MAC;
+            hdr.ethernet.dstAddr = COLLECTOR_MAC;
+            hdr.ipv4.dstAddr = COLLECTOR_IP;
+            // TODO
+        }
+
     }
 }

@@ -69,32 +69,35 @@ control Ingress(inout headers hdr, inout metadata meta,
         Forward.apply(hdr, meta, ig_intr_md);          
         PortForward.apply(hdr, meta, ig_intr_md);
         
-        #ifdef BMV2
-        Int_transit.apply(hdr, meta, ig_intr_md);
-        #elif TOFINO
-        Int_transit.apply(hdr, meta, ig_tm_md, ig_prsr_md);
-        #endif
-        
-        // egress_port need to be set
-        Int_sink.apply(hdr, meta, ig_intr_md);    
-        
-        #if TOFINO 
-        ig_tm_md.bypass_egress = 1;
-        #endif
+        Int_sink_config.apply(hdr, meta, ig_intr_md);    
 	}
 }
 
-#if TOFINO 
+#ifdef BMV2
+
+control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t eg_intr_md) {
+#elif TOFINO 
+
 control Egress(inout headers hdr, inout metadata meta, 
                     /* Intrinsic */    
                     in    egress_intrinsic_metadata_t                  eg_intr_md,
                     in    egress_intrinsic_metadata_from_parser_t      eg_prsr_md,
                     inout egress_intrinsic_metadata_for_deparser_t     eg_dprsr_md,
                     inout egress_intrinsic_metadata_for_output_port_t  eg_oport_md) {
+#endif
+
     apply {
+        #ifdef BMV2
+        Int_transit.apply(hdr, meta, eg_intr_md);
+        #elif TOFINO
+        Int_transit.apply(hdr, meta, eg_tm_md, eg_prsr_md);
+        #endif
+        
+        // egress_port need to be set
+        Int_sink.apply(hdr, meta, eg_intr_md);    
     }
 }
-#endif
+
     
 
 #ifdef BMV2

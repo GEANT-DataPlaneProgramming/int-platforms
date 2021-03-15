@@ -1,6 +1,7 @@
 table_add tb_int_transit configure_transit => 2 1500
-table_add tb_int_sink configure_sink 1 =>
-table_add tb_forward send_to_port 00:10:db:ff:10:02&&&0xFFFFFFFF => 4 0
+table_add tb_int_sink configure_sink 1 => 4
+mirroring_add 1 4
+table_add tb_forward send_to_port 00:10:db:ff:10:02&&&0xFFFFFFFF => 1 0
 table_add tb_forward send_to_port 00:00:00:00:02:02&&&0xFFFFFFFF => 1 10
 table_add tb_forward send_to_port 00:00:00:00:01:01&&&0xFFFFFFFF => 2 11
 

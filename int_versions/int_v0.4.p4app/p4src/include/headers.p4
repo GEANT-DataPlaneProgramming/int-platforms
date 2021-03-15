@@ -28,6 +28,16 @@
 const bit<32> PORT_METADATA_SIZE = 32w64;  //TOFINO REQUIREMENTS
 #endif
 
+
+#define PKT_INSTANCE_TYPE_NORMAL 0
+#define PKT_INSTANCE_TYPE_INGRESS_CLONE 1
+#define PKT_INSTANCE_TYPE_EGRESS_CLONE 2
+#define PKT_INSTANCE_TYPE_COALESCED 3
+#define PKT_INSTANCE_TYPE_INGRESS_RECIRC 4
+#define PKT_INSTANCE_TYPE_REPLICATION 5
+#define PKT_INSTANCE_TYPE_RESUBMIT 6
+
+
 header ethernet_t {
     bit<48> dstAddr;
     bit<48> srcAddr;
@@ -144,11 +154,13 @@ header int_q_occupancy_t {
 }
 
 struct int_metadata_t {
-    bit<1>  source;
-    bit<1>  sink;
+    bit<1>  source;    // is INT source functionality enabled
+    bit<1>  sink;        // is INT sink functionality enabled
     bit<32> switch_id;
-    bit<16>  insert_byte_cnt;
-    bit<8> int_hdr_word_len;
+    bit<16>  insert_byte_cnt;  // counter of inserted INT bytes
+    bit<8> int_hdr_word_len;  // counter of inserted INT words
+    bit<1> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet 
+    bit<9> sink_reporting_port;    // on which port INT reports must be send to INT collector
 }
 
 struct layer34_metadata_t {

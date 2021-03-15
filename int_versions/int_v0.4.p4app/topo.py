@@ -172,7 +172,7 @@ def main():
     #create_link_to_external_interface(switch=net.switches[1], external_interface_name='eth1')
     #create_link_to_external_interface(switch=net.switches[2], external_interface_name='eth2')
     
-    veth_dp_port = create_dp_cpu_link(switch=net.switches[2], cpu_mac=CONTROL_CPU_MAC, cpu_ip=CONTROL_CPU_IP, dp_mac=CONTROL_DP_MAC)
+    veth_dp_port = create_dp_cpu_link(switch=net.switches[1], cpu_mac=CONTROL_CPU_MAC, cpu_ip=CONTROL_CPU_IP, dp_mac=CONTROL_DP_MAC)
 
     net.start()
     
@@ -197,7 +197,7 @@ def main():
         cmd = [args.cli, "--json", args.json,
                "--thrift-port", str(_THRIFT_BASE_PORT + i)
                ]
-        with open("commands"+str((i+1))+".txt", "r") as f:
+        with open("commands/commands"+str((i+1))+".txt", "r") as f:
             print " ".join(cmd)
             try:
                 output = subprocess.check_output(cmd, stdin = f)

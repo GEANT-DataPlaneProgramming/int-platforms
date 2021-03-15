@@ -18,6 +18,11 @@
  * limitations under the License.
  */
 
+error
+{
+	INTShimLenTooShort,
+	INTVersionNotSupported
+}
 
 #ifdef BMV2
  
@@ -28,24 +33,32 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
 parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out ingress_intrinsic_metadata_t standard_metadata) {
 
 #endif
-    state parse_int_tail {
-        packet.extract(hdr.int_tail);
-        transition accept;
+
+    state start {
+        #ifdef TOFINO
+        packet.extract(standard_metadata);
+        packet.advance(PORT_METADATA_SIZE);
+        #endif
+        transition parse_ethernet;
     }
-    state parse_int_data {
-        bit<8> int_headers_len_in_words = (bit<8>)(INT_ALL_HEADER_LEN_BYTES)>>2;
-        bit<32> int_data_len_in_words = (bit<32>)(hdr.int_shim.len - int_headers_len_in_words);
-        bit<32> int_data_len_in_bits =  int_data_len_in_words << 5;
-        packet.extract(hdr.int_data, int_data_len_in_bits);
-        transition parse_int_tail;
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
+            16w0x800: parse_ipv4;
+            default: accept;
+        }
     }
-    state parse_int_header {
-        packet.extract(hdr.int_header);
-        transition parse_int_data;
-    }
-    state parse_int_shim {
-        packet.extract(hdr.int_shim);
-        transition parse_int_header;
+    state parse_ipv4 {
+        packet.extract(hdr.ipv4);
+        meta.layer34_metadata.ip_src = hdr.ipv4.srcAddr;
+        meta.layer34_metadata.ip_dst = hdr.ipv4.dstAddr;
+        meta.layer34_metadata.ip_ver = 8w4;
+        meta.layer34_metadata.dscp = hdr.ipv4.dscp;
+        transition select(hdr.ipv4.protocol) {
+            8w0x11: parse_udp;
+            8w0x6: parse_tcp;
+            default: accept;
+        }
     }
     state parse_tcp {
         packet.extract(hdr.tcp);
@@ -67,40 +80,28 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
             default: accept;
         }
     }
-    state parse_ipv4 {
-        packet.extract(hdr.ipv4);
-        meta.layer34_metadata.ip_src = hdr.ipv4.srcAddr;
-        meta.layer34_metadata.ip_dst = hdr.ipv4.dstAddr;
-        meta.layer34_metadata.ip_ver = 8w4;
-        meta.layer34_metadata.dscp = hdr.ipv4.dscp;
-        transition select(hdr.ipv4.protocol) {
-            8w0x11: parse_udp;
-            8w0x6: parse_tcp;
-            default: accept;
-        }
+    state parse_int_shim {
+        packet.extract(hdr.int_shim);
+        verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);
+        transition parse_int_header;
     }
-    state parse_ethernet {
-        packet.extract(hdr.ethernet);
-        transition select(hdr.ethernet.etherType) {
-            16w0x800: parse_ipv4;
-            default: accept;
-        }
+    state parse_int_header {
+        packet.extract(hdr.int_header);
+        verify(hdr.int_header.ver == 1, error.INTVersionNotSupported);
+        transition parse_int_data;
     }
-    state start {
-        #ifdef TOFINO
-        packet.extract(standard_metadata);
-        packet.advance(PORT_METADATA_SIZE);
-        #endif
-        transition parse_ethernet;
+    state parse_int_data {
+        bit<8> int_headers_len_in_words = (bit<8>)(INT_ALL_HEADER_LEN_BYTES)>>2;
+        bit<32> int_data_len_in_words = (bit<32>)(hdr.int_shim.len - int_headers_len_in_words);
+        bit<32> int_data_len_in_bits =  int_data_len_in_words << 5;
+        packet.extract(hdr.int_data, int_data_len_in_bits);
+        transition parse_int_tail;
+    }
+    state parse_int_tail {
+        packet.extract(hdr.int_tail);
+        transition accept;
     }
 }
-
-#ifdef BMV2
-control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-    apply {
-    }
-}
-#endif
 
 #ifdef BMV2
 
