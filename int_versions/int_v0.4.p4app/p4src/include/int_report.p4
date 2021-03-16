@@ -71,7 +71,7 @@ control Int_report(inout headers hdr, inout metadata meta, inout ingress_intrins
 
         // UDP ***************************************************************
         hdr.report_udp.setValid();
-        hdr.report_udp.srcPort = 2048;
+        hdr.report_udp.srcPort = 0;
         hdr.report_udp.dstPort = collector_port;
         // ipv4 header + 2x udp header + eth header + report header + int data len
         // hdr.report_udp.len = (bit<16>)(20 + 8 + 8 + 14)
@@ -80,6 +80,7 @@ control Int_report(inout headers hdr, inout metadata meta, inout ingress_intrins
         hdr.report_udp.len = hdr.report_ipv4.totalLen - 20;
         
         // INT report fixed header ***********************************************
+        // INT report version 1.0
         hdr.report_fixed_header.setValid();
         hdr.report_fixed_header.ver = 1;
         hdr.report_fixed_header.len = 4;
