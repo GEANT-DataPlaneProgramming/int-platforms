@@ -145,9 +145,9 @@ def create_int_collection_network(switches):
     #create bridge acting as hub
     bridge_name = 'int_collection'
     quietRunNs( 'brctl addbr %s' % bridge_name)
-    quietRunNs( 'brctl stp %s off' % bridge_name)
-    quietRunNs( 'brctl setageing %s 0' % bridge_name)
-    quietRunNs( 'brctl setfd %s 0' % bridge_name)
+    #quietRunNs( 'brctl stp %s off' % bridge_name)
+    #quietRunNs( 'brctl setageing %s 0' % bridge_name)
+    #quietRunNs( 'brctl setfd %s 0' % bridge_name)
     
     create_int_collector_link(bridge_name)
     

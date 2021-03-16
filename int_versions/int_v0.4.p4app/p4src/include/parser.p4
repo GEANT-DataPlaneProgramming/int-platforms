@@ -107,14 +107,23 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
 
 control DeparserImpl(packet_out packet, in headers hdr) {
     apply {
+        // raport headers
+        packet.emit(hdr.report_ethernet);
+        packet.emit(hdr.report_ipv4);
+        packet.emit(hdr.report_udp);
+        packet.emit(hdr.report_fixed_header);
+        
+        // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.udp);
         packet.emit(hdr.tcp);
         
+        // INT headers
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
         
+        // local INT node metadata
         packet.emit(hdr.int_switch_id);
         packet.emit(hdr.int_port_ids);
         packet.emit(hdr.int_hop_latency);
@@ -124,6 +133,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_egress_port_tx_util);
         packet.emit(hdr.int_q_congestion);
         
+        // other INT metadata 
         packet.emit(hdr.int_data);
         packet.emit(hdr.int_tail);
     }
@@ -153,6 +163,26 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
                 hdr.ipv4.dstAddr
             },
             hdr.ipv4.hdrChecksum,
+            HashAlgorithm.csum16
+        );
+        
+        update_checksum(
+            hdr.report_ipv4.isValid(),
+            {
+                hdr.report_ipv4.version,
+                hdr.report_ipv4.ihl,
+                hdr.report_ipv4.dscp,
+                hdr.report_ipv4.ecn,
+                hdr.report_ipv4.totalLen,
+                hdr.report_ipv4.id,
+                hdr.report_ipv4.flags,
+                hdr.report_ipv4.fragOffset,
+                hdr.report_ipv4.ttl,
+                hdr.report_ipv4.protocol,
+                hdr.report_ipv4.srcAddr,
+                hdr.report_ipv4.dstAddr
+            },
+            hdr.report_ipv4.hdrChecksum,
             HashAlgorithm.csum16
         );
         
@@ -264,15 +294,18 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
                 hdr.udp.len
             });
         }
-
+        
+        // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.udp);
-        packet.emit(hdr.enc_ipv4);
         packet.emit(hdr.tcp);
-        packet.emit(hdr.enc_udp);
+        
+        // INT headers
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
+        
+        // local INT node metadata
         packet.emit(hdr.int_switch_id);
         packet.emit(hdr.int_port_ids);
         packet.emit(hdr.int_hop_latency);
@@ -281,6 +314,9 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_egress_port_tx_util);
         packet.emit(hdr.int_q_congestion);
+        
+        // other INT metadata 
+        packet.emit(hdr.int_data);
         packet.emit(hdr.int_tail);
     }
 }
@@ -288,7 +324,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
 
 /*********************  E G R E S S    D E P A R S E R  ************************/
 
-control EgressDeparser(packet_out pkt,
+control EgressDeparser(packet_out packet,
                                     /* User */
                                     inout headers                       hdr,
                                     in    metadata                      meta,
@@ -296,25 +332,35 @@ control EgressDeparser(packet_out pkt,
                                     in    egress_intrinsic_metadata_for_deparser_t  eg_dprsr_md) {
     
     apply {
-        pkt.emit(hdr.ethernet);
-            pkt.emit(hdr.ipv4);
-            pkt.emit(hdr.udp);
-            pkt.emit(hdr.enc_ipv4);
-            pkt.emit(hdr.tcp);
-            pkt.emit(hdr.enc_udp);
-            pkt.emit(hdr.int_shim);
-            pkt.emit(hdr.int_header);
-            pkt.emit(hdr.int_switch_id);
-            pkt.emit(hdr.int_port_ids);
-            pkt.emit(hdr.int_hop_latency);
-            pkt.emit(hdr.int_q_occupancy);
-            pkt.emit(hdr.int_ingress_tstamp);
-            pkt.emit(hdr.int_egress_tstamp);
-            pkt.emit(hdr.int_egress_port_tx_util);
-            pkt.emit(hdr.int_q_congestion);
-            pkt.emit(hdr.int_data);
-            pkt.emit(hdr.int_tail);
-
+        // raport headers
+        packet.emit(hdr.report_ethernet);
+        packet.emit(hdr.report_ipv4);
+        packet.emit(hdr.report_udp);
+        packet.emit(hdr.report_fixed_header);
+        
+        // original headers
+        packet.emit(hdr.ethernet);
+        packet.emit(hdr.ipv4);
+        packet.emit(hdr.udp);
+        packet.emit(hdr.tcp);
+        
+        // INT headers
+        packet.emit(hdr.int_shim);
+        packet.emit(hdr.int_header);
+        
+        // local INT node metadata
+        packet.emit(hdr.int_switch_id);
+        packet.emit(hdr.int_port_ids);
+        packet.emit(hdr.int_hop_latency);
+        packet.emit(hdr.int_q_occupancy);
+        packet.emit(hdr.int_ingress_tstamp);
+        packet.emit(hdr.int_egress_tstamp);
+        packet.emit(hdr.int_egress_port_tx_util);
+        packet.emit(hdr.int_q_congestion);
+        
+        // other INT metadata 
+        packet.emit(hdr.int_data);
+        packet.emit(hdr.int_tail);
     }
 }
 

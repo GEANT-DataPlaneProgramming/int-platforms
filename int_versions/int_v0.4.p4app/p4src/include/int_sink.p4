@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include "int_report.p4"
 
 const bit<48> COLLECTOR_MAC = 0xf661c06a1421; 
 const bit<32> COLLECTOR_IP = 0x0a0000fe;
@@ -102,7 +103,7 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
         hdr.int_tail.setInvalid();
     }
     
-    
+    /*
     action send_report(bit<48> dp_mac, bit<48> collector_mac, bit<32> collector_ip)
     {
         // frame to INT collector requires proper MAC and IP addresses
@@ -116,6 +117,7 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
             send_report;
         }
     }
+    */
     
     apply {
     
@@ -124,20 +126,12 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
             return;
         
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL && meta.int_metadata.remove_int == 1) {
+            // remove INT headers from a frame
             remove_sink_header();
         }
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE) {
-            
-            // prepare INT report
-   
-            // send frame to INT collector
-            tb_int_reporting.apply();
-            
-            //hdr.ethernet.srcAddr = DP_MAC;
-            //hdr.ethernet.dstAddr = COLLECTOR_MAC;
-            //hdr.ipv4.dstAddr = COLLECTOR_IP;
-            
-            // TODO
+            // prepare an INT report for the INT collector
+            Int_report.apply(hdr, meta, standard_metadata);
         }
 
     }

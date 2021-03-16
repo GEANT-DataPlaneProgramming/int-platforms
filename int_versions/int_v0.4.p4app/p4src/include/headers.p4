@@ -153,6 +153,23 @@ header int_q_occupancy_t {
     bit<24> q_occupancy;
 }
 
+header int_report_fixed_header_t {
+    bit<4> ver;
+    bit<4> len;
+    bit<3> nprot;
+    bit<6> rep_md_bits;
+    bit<6> reserved;
+    bit<1> d;
+    bit<1> q;
+    bit<1> f;
+    bit<6> hw_id;
+    bit<32> switch_id;
+    bit<32> seq_num;
+    bit<32> ingress_tstamp;
+}
+
+const bit<8> REPORT_FIXED_HEADER_LEN = 16;
+
 struct int_metadata_t {
     bit<1>  source;    // is INT source functionality enabled
     bit<1>  sink;        // is INT sink functionality enabled
@@ -186,15 +203,24 @@ header int_data_t {
 
 
 struct headers {
+    // INT report headers
+    ethernet_t                report_ethernet;
+    ipv4_t                      report_ipv4;
+    udp_t                       report_udp;
+    int_report_fixed_header_t       report_fixed_header;
+    
+    // normal headers
     ethernet_t                ethernet;
     ipv4_t                    ipv4;
     tcp_t                     tcp;
     udp_t                     udp;
 
+    // INT headers
     intl4_shim_t          int_shim;
     int_header_t         int_header;
     intl4_tail_t            int_tail;
 
+    // local INT node metadata
     int_egress_port_tx_util_t  int_egress_port_tx_util;
     int_egress_tstamp_t         int_egress_tstamp;
     int_hop_latency_t             int_hop_latency;
@@ -204,6 +230,7 @@ struct headers {
     int_q_occupancy_t           int_q_occupancy;
     int_switch_id_t                int_switch_id;
     
+    // INT node metadata from previous nodes
     int_data_t                  int_data;
 }
 
