@@ -125,10 +125,10 @@ def create_link_to_external_interface(switch, external_interface_name):
     _intf = Intf(external_interface_name, node=switch)
     
 
-def quietRunNs(command, namespace='ns_int', display=True):
+def quietRunNs(command, namespace='ns_int', display=True, shell=True):
     if display:
         print "Namespace %s: %s" % (namespace, command)
-    quietRun('ip netns exec %s %s' % (namespace, command), shell=True )
+    quietRun('ip netns exec %s %s' % (namespace, command), shell=shell)
     
 def _quietRun(command):
     print command
@@ -145,9 +145,6 @@ def create_int_collection_network(switches):
     #create bridge acting as hub
     bridge_name = 'int_collection'
     quietRunNs( 'brctl addbr %s' % bridge_name)
-    #quietRunNs( 'brctl stp %s off' % bridge_name)
-    #quietRunNs( 'brctl setageing %s 0' % bridge_name)
-    #quietRunNs( 'brctl setfd %s 0' % bridge_name)
     
     create_int_collector_link(bridge_name)
     
@@ -156,6 +153,25 @@ def create_int_collection_network(switches):
         create_dp_cpu_link(id, switch, bridge_name)
 
     quietRunNs( 'ip link set up dev %s' % bridge_name)
+    
+    create_internet_connectivity()
+    start_int_collector()
+    
+def start_int_collector():
+    print "\nRunning INT collector"
+    collector_cmd = 'ip netns exec ns_int python /tmp/scripts/int_collector_influx.py &> /dev/null'
+    print collector_cmd
+    os.system(collector_cmd)
+    
+def create_internet_connectivity():
+    _quietRun( 'ip link add name internet_cont type veth peer name internet_coll')
+    
+    _quietRun( 'ip link set internet_coll netns ns_int')
+    quietRunNs( 'ifconfig internet_coll %s/24' % "192.168.0.2")
+    quietRunNs( 'ip link set dev internet_coll up')
+    
+    _quietRun( 'ifconfig internet_cont %s/24' % "192.168.0.1")
+    _quietRun( 'ip link set dev internet_cont up')
  
 def create_int_collector_link(bridge_name):
     '''
@@ -262,6 +278,7 @@ def main():
         s.cmd("sysctl -w net.ipv4.tcp_congestion_control=reno")
         s.cmd("iptables -I OUTPUT -p icmp --icmp-type destination-unreachable -j DROP")
 
+    net.get('h1').cmd('python /tmp/host/udp_frame.py')
     time.sleep(1)
     print "Ready !"
 
