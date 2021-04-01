@@ -1,5 +1,5 @@
 table_add tb_activate_source activate_source 1 =>
-table_add tb_int_source configure_source 10.0.1.1&&&0xFFFFFFFF 10.0.2.2&&&0xFFFFFFFF 0x11FF&&&0x0000 0x22FF&&&0x0000 => 4 4 0xCC 0
+table_add tb_int_source configure_source 10.0.1.1&&&0xFFFFFFFF 10.0.2.2&&&0xFFFFFFFF 0x11FF&&&0x0000 0x22FF&&&0x0000 => 4 4 0xFF 0
 table_add tb_int_source configure_source 150.254.169.196&&&0xFFFFFFFF 195.113.172.46&&&0xFFFFFFFF 0x11FF&&&0xFFFF 0x4268&&&0xFFFF => 4 4 0xCC 0
 
 table_add tb_int_sink configure_sink 1 => 4

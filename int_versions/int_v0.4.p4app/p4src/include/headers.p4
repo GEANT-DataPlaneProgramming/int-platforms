@@ -173,11 +173,12 @@ const bit<8> REPORT_FIXED_HEADER_LEN = 16;
 struct int_metadata_t {
     bit<1>  source;    // is INT source functionality enabled
     bit<1>  sink;        // is INT sink functionality enabled
-    bit<32> switch_id;
+    bit<32> switch_id;  // INT switch id is configured by network controller
     bit<16>  insert_byte_cnt;  // counter of inserted INT bytes
     bit<8> int_hdr_word_len;  // counter of inserted INT words
     bit<1> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet 
     bit<9> sink_reporting_port;    // on which port INT reports must be send to INT collector
+    bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
 }
 
 struct layer34_metadata_t {

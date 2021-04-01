@@ -17,7 +17,7 @@
 echo "Switch 10.0.2.2"
 
 echo "displaying switch1 debug mode"
-docker exec  -i -t hh bm_p4dbg --thrift-port 22223 
+docker exec  -i -t int bm_p4dbg --thrift-port 22223 
 echo
 
 

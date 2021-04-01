@@ -20,18 +20,15 @@ import sys
 from time import sleep, time
 
 src_mac = "00:00:00:00:01:01"
-#src_mac = "5c:b9:01:93:53:54"
-data = "ABCDFE" 
-#src_ip = "10.0.10.10"
-src_ip = "10.0.1.1"
-#dst_mac = "92:64:a3:10:03:84"
-#dst_mac = "00:10:db:ff:10:02"
 dst_mac = "00:00:00:00:02:02"
+
+src_ip = "10.0.1.1"
 dst_ip = "10.0.2.2"
-#dst_ip = "195.113.172.46"
+
 sport = 0x11FF
 dport = 0x22FF
-#dport = 0x4268 # 17000
+
+data = "ABCDFE" 
 
 interface = [i for i in get_if_list() if "eth0" in i][0]
 s = conf.L2socket(iface=interface)

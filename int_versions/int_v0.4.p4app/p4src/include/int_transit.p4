@@ -59,7 +59,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     }
     action int_set_header_2() {
         hdr.int_hop_latency.setValid();
-        hdr.int_hop_latency.hop_latency = 20; // TODO - hardcoded value
+        hdr.int_hop_latency.hop_latency = (bit<32>)(standard_metadata.egress_global_timestamp - standard_metadata.ingress_global_timestamp);
     }
     action int_set_header_3() {
         hdr.int_q_occupancy.setValid();
@@ -68,21 +68,25 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     }
     action int_set_header_4() {
         hdr.int_ingress_tstamp.setValid();
+        
+        #ifdef BMV2
         start_timestamp.read(hdr.int_ingress_tstamp.ingress_tstamp, 0);
-        bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;
-        _timestamp = 1000 * _timestamp;
-        hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + _timestamp;
+        //bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;   
+        bit<64> _timestamp = (bit<64>)meta.int_metadata.ingress_tstamp;  
+        hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + 1000 * _timestamp;
+        #elif TOFINO
+        hdr.int_egress_tstamp.ingress_tstamp  = (bit<64>)imp.global_tstamp;
+        #endif
     }
     action int_set_header_5() {
         hdr.int_egress_tstamp.setValid();
         
         #ifdef BMV2
         start_timestamp.read(hdr.int_egress_tstamp.egress_tstamp, 0);
-        bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;
-        _timestamp = 1000 * _timestamp;
-        hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + _timestamp + 1;
+        bit<64> _timestamp = (bit<64>)standard_metadata.egress_global_timestamp;
+        hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + 1000 * _timestamp;
         #elif TOFINO
-        hdr.int_egress_tstamp.egress_tstamp = (bit<64>)imp.global_tstamp;
+        hdr.int_egress_tstamp.egress_tstamp = (bit<64>)imp.global_tstamp +1; // TODO
         #endif
     }
     action int_set_header_6() {
@@ -330,7 +334,6 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
             0xE0 &&& 0xF0 : int_set_header_0003_i14();
             0xF0 &&& 0xF0 : int_set_header_0003_i15();
         }
-        size = 16;
     }
     
     table tb_int_inst_0407 {
@@ -373,7 +376,6 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
             0x0E &&& 0x0F : int_set_header_0407_i14();
             0x0F &&& 0x0F : int_set_header_0407_i15();
         }
-        size = 16;
     }
 
     action int_hop_cnt_increment() {

@@ -64,10 +64,18 @@ control Ingress(inout headers hdr, inout metadata meta,
             //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
         #endif
 
+        // in case of INT source port add main INT headers
+        
         Int_source.apply(hdr, meta, ig_intr_md);
+        
+        // perform minimalistic L1 or L2 frame forwarding
+        // set egress_port for the frame
         
         Forward.apply(hdr, meta, ig_intr_md);          
         PortForward.apply(hdr, meta, ig_intr_md);
+        
+        // in case of sink node make packet clone I2E in order to create INT report
+        // which will be send to INT reporting port        
         
         Int_sink_config.apply(hdr, meta, ig_intr_md);    
 	}
@@ -87,13 +95,16 @@ control Egress(inout headers hdr, inout metadata meta,
 #endif
 
     apply {
+    
         #ifdef BMV2
         Int_transit.apply(hdr, meta, eg_intr_md);
         #elif TOFINO
         Int_transit.apply(hdr, meta, eg_tm_md, eg_prsr_md);
         #endif
         
-        // egress_port need to be set
+        // in case of the INT sink port remove INT headers
+        // when frame duplicate on the INT report port then reformat frame into INT report frame
+
         Int_sink.apply(hdr, meta, eg_intr_md);    
     }
 }

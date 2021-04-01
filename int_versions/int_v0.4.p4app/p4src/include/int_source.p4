@@ -102,9 +102,15 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
 
     apply {
         #ifdef BMV2
+        
+        // in case of frame clone for the INT sink reporting
+        // ingress timestamp is not available on Egress pipeline
+        meta.int_metadata.ingress_tstamp = standard_metadata.ingress_global_timestamp;
+        
         //check if packet appeard on ingress port with active INT source
         tb_activate_source.apply();
-        if (meta.int_metadata.source == 1w1)
+        
+        if (meta.int_metadata.source == 1w1)      
         #endif
         //TODO: find TOFINO equivalent
             //apply INT source logic on INT monitored flow
