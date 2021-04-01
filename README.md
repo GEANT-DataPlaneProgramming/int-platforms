@@ -1,10 +1,10 @@
-P4 INT implementation for bvm2 switches running within mininet environment.
+P4 INT implementation for bmv2 switches running within mininet environment.
 ===========================================================================
 
 This is P4 implementation of the In-band Network Telemetry. The P4 INT is deployed using testbed composed of three bmv2 switches running within Mininet virtual enviroment.
 The whole environment is provided basing on p4app solution (https://github.com/p4lang/p4app).
 
-The INT implementation and testing was done within the GÉANT Data Plane Programmibilty activity:
+The INT implementation and testing was done within the Gï¿½ANT Data Plane Programmibilty activity:
 * website will be published soon
 
 P4 INT
