@@ -18,6 +18,7 @@ P4APP_IMAGE=${P4APP_IMAGE:-baru64/int_p4app:0.1}
 P4APP_CONTAINER_ARGS=${P4APP_CONTAINER_ARGS:-""}
 
 P4APP_NAME="int"
+EXTERNAL_INTERFACE_0="macvlan_int_0"
 
 myrealpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
@@ -63,13 +64,12 @@ function run-p4app {
   # add docker macvlan interfaces to docker container  
   # allowing for data plane traffic to be send from mininet to external network
   # detects existance of macvlan docker interface named `macvlan_int_0`
-  external_interface_0="macvlan_int_0"
-  echo "Searching for docker macvlan interface $external_interface_0"
-  if docker network ls -f driver=macvlan | grep -q $external_interface_0; then
-    echo "Adding $external_interface_0 to docker container $P4APP_NAME"
-    docker network connect $external_interface_0 $P4APP_NAME 
+  echo "Searching for docker macvlan interface EXTERNAL_INTERFACE_0"
+  if docker network ls -f driver=macvlan | grep -q EXTERNAL_INTERFACE_0; then
+    echo "Adding EXTERNAL_INTERFACE_0 to docker container $P4APP_NAME"
+    docker network connect EXTERNAL_INTERFACE_0 $P4APP_NAME 
   else
-    echo "Interface $external_interface_0 not found"
+    echo "Interface EXTERNAL_INTERFACE_0 not found"
   fi
   docker start --interactive  $P4APP_NAME 
 }

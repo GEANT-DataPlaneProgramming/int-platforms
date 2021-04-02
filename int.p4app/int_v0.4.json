@@ -1,0 +1,10 @@
+{
+	"program": "p4src/int_v0.4/int.p4",
+	"language": "p4-16",
+	"targets": {
+		"custom": {
+			"program": "topo.py --influx hs-04.ipa.psnc.pl:8086"
+		}
+	}
+}
+

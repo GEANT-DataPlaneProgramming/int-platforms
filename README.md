@@ -124,8 +124,8 @@ It is possible to define the topology, P4-switch and host properties in `topo.py
 
 Testbed and implementation details
 ----------------------------------
-Our emulation environment is composed by three switches emulated with Mininet. The adopted triangular topology is shown below. Each switch connects to a host, and the flows in the network are identified by {srcIP, dstIP} pairs.
-![](https://raw.githubusercontent.com/p4lang/tutorials/master/exercises/basic_tunnel/topo.png)
+Our emulation environment is composed by three switches emulated with Mininet. The adopted triangular topology is shown below. Each switch connects to a host, and the flows in the network are identified by {srcIP, srcPort, dstIP, dstPorts} tuple.
+![INT infrastruture topology](docs/p4app-int-topology.png)
 
 
 
