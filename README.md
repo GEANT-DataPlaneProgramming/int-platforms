@@ -34,7 +34,7 @@ A few flavors of INT implementation are available:
 
 Future plans assumes implementation of the INT specification version 2.0.
 
-
+Note: All INT implementation use 64-bit ingress and egress timestamps (instead of 32-bit timestamps defined in INT v0.4 and v1.0).
 
 INT collector
 ----
