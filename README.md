@@ -29,8 +29,8 @@ This repository contains P4 code implementing the INT data plane functionality. 
 In this repository, we are trying maintain compatibility both with bmv2 and Tofino switches. Limitations of both platforms have impact on the P4 INT code.
 
 A few flavors of INT implementation are available:
-- ./int.p4app/int_v0.4.json - version 0.4 of the INT protocol; currently most tested version of the INT protocol; it is compatible with the INT implementation contained in the ONOS network operating system; INT version 0.4 documentation is not longer available on p4.org
-- ./int.p4app/int_v1.0.json - version 1.0 of the INT protocol; under development
+- `./int.p4app/int_v0.4.json` - version 0.4 of the INT protocol; currently most tested version of the INT protocol; it is compatible with the INT implementation contained in the ONOS network operating system; INT version 0.4 documentation is not longer available on p4.org
+- `./int.p4app/int_v1.0.json` - version 1.0 of the INT protocol; under development
 
 Future plans assumes implementation of the INT specification version 2.0.
 
@@ -202,7 +202,7 @@ You can debug each switch by using the bmv2 P4 debugger:
     ./utils/debug_switch3.sh
 ```  
 
-See p4dbg commands: https://github.com/p4lang/behavioral-model/blob/main/docs/p4dbg_user_guide.md
+See p4dbg commands: https://github.com/p4lang/behavioral-model/blob/main/docs/p4dbg_user_guide.md.
    
 
 The resulted logs and pcap files are stored in `/tmp/p4app_logs` within a docker container, which are shared volumes with 
@@ -211,12 +211,15 @@ The resulted logs and pcap files are stored in `/tmp/p4app_logs` within a docker
 INT traffic visualisation
 ------
 
-In order to visualise monitoring data gathered by the INT system please use Influx/Grafana infrastructure provided by our second project: https://github.com/GEANT-DataPlaneProgramming/In_band_telemetry_visualisation
+In order to visualise monitoring data gathered by the INT system please use Influx/Grafana infrastructure provided by our second project: https://github.com/GEANT-DataPlaneProgramming/In_band_telemetry_visualisation.
+
 In order to configure desire InfluxDB destination for INT monitoring data please edit proper p4app manifest file (in example: `./int.p4app/int_v1.0.json`):
 
 ![The INT monitoring of the int-p4app network flow ](docs/int-p4app-visualisation.png)
 
-End-to-end flow delay values on graphs are not previse beacause of bmv2 time synchronisation problems. Delay values can be negative if sink bmv2 switch will start sooner that source bmv2 switch. 
+End-to-end flow delay values on graphs are not previse beacause of bmv2 time synchronisation problems. 
+Delay values can be negative if sink bmv2 switch will start sooner that source bmv2 switch. 
+
 Please don't be suprised when bmv2 process packets in hundreds of miliseconds (with great time fluctuations)
 
 Contact
