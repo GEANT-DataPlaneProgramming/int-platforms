@@ -96,7 +96,8 @@ Our INT p4app package has a directory structure that looks like this:
     |
     |- p4src/   (P4 INT code for bmv2)
     |
-    |- utils/   (additional utility scripts allowing to debug bmv2 switch, connect to bmv2 CLI, open mininet host xterm, INT collector is also placed here)
+    |- utils/   (additional utility scripts allowing to debug bmv2 switch, connect to bmv2 CLI, 
+                   open mininet host xterm, INT collector is also placed here)
     |
     |- int_v0.4.json   (p4app config file for INT version 0.4)
     |
@@ -104,7 +105,8 @@ Our INT p4app package has a directory structure that looks like this:
     |
     |- topo.txt  (defines topology of the mininet network)
     |
-    |- topo.py (python program that use `topo.py`, run custom mininet network and apply configuraton to bmv2 switches;
+    |- topo.py (python program that use `topo.py`, run custom mininet network 
+                    and apply configuraton to bmv2 switches;
                     it also create INT collection network and start the INT collector; 
                     it is also responsible for establishing of the external network connectivity)
 
@@ -213,6 +215,9 @@ In order to visualise monitoring data gathered by the INT system please use Infl
 In order to configure desire InfluxDB destination for INT monitoring data please edit proper p4app manifest file (in example: `./int.p4app/int_v1.0.json`):
 
 ![The INT monitoring of the int-p4app network flow ](docs/int-p4app-visualisation.png)
+
+End-to-end flow delay values on graphs are not previse beacause of bmv2 time synchronisation problems. Delay values can be negative if sink bmv2 switch will start sooner that source bmv2 switch. 
+Please don't be suprised when bmv2 process packets in hundreds of miliseconds (with great time fluctuations)
 
 Contact
 ---------
