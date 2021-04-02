@@ -206,6 +206,14 @@ See p4dbg commands: https://github.com/p4lang/behavioral-model/blob/main/docs/p4
 The resulted logs and pcap files are stored in `/tmp/p4app_logs` within a docker container, which are shared volumes with 
 
 
+INT traffic visualisation
+------
+
+In order to visualise monitoring data gathered by the INT system please use Influx/Grafana infrastructure provided by our second project: https://github.com/GEANT-DataPlaneProgramming/In_band_telemetry_visualisation
+In order to configure desire InfluxDB destination for INT monitoring data please edit proper p4app manifest file (in example: `./int.p4app/int_v1.0.json`):
+
+![The INT monitoring of the int-p4app network flow ](docs/int-p4app-visualisation.png)
+
 Contact
 ---------
 int-discuss@lists.geant.org
