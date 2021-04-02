@@ -95,10 +95,6 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         bit<32> int_data_len_in_words = (bit<32>)(hdr.int_shim.len - int_headers_len_in_words);
         bit<32> int_data_len_in_bits =  int_data_len_in_words << 5;
         packet.extract(hdr.int_data, int_data_len_in_bits);
-        transition parse_int_tail;
-    }
-    state parse_int_tail {
-        packet.extract(hdr.int_tail);
         transition accept;
     }
 }
@@ -130,12 +126,11 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_q_occupancy);
         packet.emit(hdr.int_ingress_tstamp);
         packet.emit(hdr.int_egress_tstamp);
-        packet.emit(hdr.int_q_congestion);
+        packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
         
         // other INT metadata 
         packet.emit(hdr.int_data);
-        packet.emit(hdr.int_tail);
     }
 }
 
@@ -213,11 +208,10 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
                 hdr.udp.len,
                 hdr.int_shim,
                 hdr.int_header,
-                hdr.int_tail,
                 hdr.int_switch_id,
                 hdr.int_port_ids,
                 hdr.int_q_occupancy,
-                hdr.int_q_congestion,
+                hdr.int_level2_port_ids,
                 hdr.int_ingress_tstamp,
                 hdr.int_egress_tstamp,
                 hdr.int_egress_port_tx_util,
@@ -270,11 +264,10 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
                 hdr.udp.len,
                 hdr.int_shim,
                 hdr.int_header,
-                hdr.int_tail,
                 hdr.int_switch_id,
                 hdr.int_port_ids,
                 hdr.int_q_occupancy,
-                hdr.int_q_congestion,
+                hdr.int_level2_port_ids,
                 hdr.int_ingress_tstamp,
                 hdr.int_egress_tstamp,
                 hdr.int_egress_port_tx_util,
@@ -312,12 +305,11 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
         packet.emit(hdr.int_q_occupancy);
         packet.emit(hdr.int_ingress_tstamp);
         packet.emit(hdr.int_egress_tstamp);
+        packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
-        packet.emit(hdr.int_q_congestion);
-        
+
         // other INT metadata 
         packet.emit(hdr.int_data);
-        packet.emit(hdr.int_tail);
     }
 }
 
@@ -355,12 +347,11 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_q_occupancy);
         packet.emit(hdr.int_ingress_tstamp);
         packet.emit(hdr.int_egress_tstamp);
-        packet.emit(hdr.int_q_congestion);
+        packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
         
         // other INT metadata 
         packet.emit(hdr.int_data);
-        packet.emit(hdr.int_tail);
     }
 }
 

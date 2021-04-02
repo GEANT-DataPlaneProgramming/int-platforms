@@ -36,30 +36,26 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
     // ins_mask - instruction_mask defining which information (INT headers types) must added to the packet
     action configure_source(bit<8> max_hop, bit<5> hope_metadata_len, bit<5> ins_cnt, bit<16> ins_mask) {
         hdr.int_shim.setValid();
-        hdr.int_shim.int_type = 1;
+        hdr.int_shim.int_type = INT_TYPE_HOP_BY_HOP;
         hdr.int_shim.len = (bit<8>)INT_ALL_HEADER_LEN_BYTES>>2;
         
         hdr.int_header.setValid();
-        hdr.int_header.ver = 1;
+        hdr.int_header.ver = INT_VERSION;
         hdr.int_header.rep = 0;
         hdr.int_header.c = 0;
         hdr.int_header.e = 0;
         hdr.int_header.rsvd1 = 0;
         hdr.int_header.rsvd2 = 0;
-        hdr.int_header.ins_cnt = ins_cnt;
-        hdr.int_header.max_hops = max_hop;
-        hdr.int_header.total_hops = 0;  //will be increased immediately by 1 within transit process
+        hdr.int_header.hop_metadata_len = hope_metadata_len;
+        hdr.int_header.remaining_hop_cnt = max_hop;  //will be decreased immediately by 1 within transit process
         hdr.int_header.instruction_mask = ins_mask;
         
-        hdr.int_tail.setValid();
-        hdr.int_tail.next_proto = hdr.ipv4.protocol;
-        hdr.int_tail.dscp = hdr.ipv4.dscp;
+        hdr.int_shim.dscp = hdr.ipv4.dscp;
         
         hdr.ipv4.dscp = IPv4_DSCP_INT;   // indicates that INT header in the packet
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + INT_ALL_HEADER_LEN_BYTES;  // adding size of INT headers
         
         hdr.udp.len = hdr.udp.len + INT_ALL_HEADER_LEN_BYTES;
-        hdr.int_tail.dest_port = hdr.udp.dstPort;
     }
     
     // INT source must be configured per each flow which must be monitored using INT
@@ -78,8 +74,8 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         }
         #endif
         size = 127;
-        default_action =
-            configure_source(4,4, 0x00cc);
+        //default_action =
+        //    configure_source(4,4, 0x00cc);
     }
 
 
