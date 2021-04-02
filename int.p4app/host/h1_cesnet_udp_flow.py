@@ -18,38 +18,33 @@ from scapy.all import Ether, IP, sendp, get_if_hwaddr, get_if_list, TCP, Raw, UD
 from scapy.config import conf
 import sys
 from time import sleep, time
-from multiprocessing import Process
 
-src_mac = "00:00:00:00:01:01"
+src_mac = "5c:b9:01:93:53:54"
 data = "ABCDFE" 
-src_ip = "10.0.10.10"
-dst_mac = "92:64:a3:10:03:84"
-dst_ip = "10.0.1.1"
+src_ip = "150.254.169.196"
+dst_mac = "00:10:db:ff:10:02"
+dst_ip = "195.113.172.46"
+sport = 0x11FF
+dport = 0x22FF
+dport = 0x4268 # 17000
 
 interface = [i for i in get_if_list() if "eth0" in i][0]
 s = conf.L2socket(iface=interface)
 
 p = Ether(dst=dst_mac,src=src_mac)/IP(frag=0,dst=dst_ip,src=src_ip)
-p = p/UDP(sport=0x11FF, dport=0x22FF)/Raw(load=data)
+p = p/UDP(sport=sport, dport=dport)/Raw(load=data)
 
-def send(id):
+if __name__ == "__main__":
     pkt_cnt = 0
     last_sec = time()
     while True:
+        #start = time()
         s.send(p)
+        #print("Send time is %s", time()-start)
+        #sleep(0.001)
+        
         pkt_cnt += 1
         if time()-last_sec > 1.0:
-            print("[%d]Pkt/s: %d" % (id, pkt_cnt))
+            print("Pkt/s", pkt_cnt)
             pkt_cnt = 0
             last_sec = time()
-
-    
-if __name__ == "__main__":
-    procs = []
-    for id in range(3):
-        proc = Process(target=send, args=(id,)) 
-        procs.append(proc)
-        proc.start()
-
-    for proc in procs:
-        proc.join()
