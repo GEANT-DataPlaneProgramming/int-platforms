@@ -1,7 +1,7 @@
 P4 INT implementation for bmv2 switches running within mininet environment.
 ===========================================================================
 
-This is P4 implementation of the In-band Network Telemetry (https://p4.org/specs/). The P4 INT is deployed using testbed composed of three bmv2 switches running within Mininet virtual enviroment.
+This is P4 implementation of the In-Band Network Telemetry (https://p4.org/specs/). The P4 INT is deployed using testbed composed of three bmv2 switches running within Mininet virtual enviroment.
 The whole environment is provided basing on p4app solution (https://github.com/p4lang/p4app).
 
 The INT implementation and testing was done within the GEANT Data Plane Programmibilty activity:
@@ -14,9 +14,9 @@ All INT code (P4 INT, INT collector, additinal mininet utils) use Apache 2.0 lic
 In-Band Network Telemetry
 ------
 
-In-Band Network Telemetry (INT)  is specified by the P4 language community  and can provide very detailed information on network behavior by inserting a small amount of information directly inside packets passing
+In-Band Network Telemetry (INT)  is specified by the P4 language community and can provide very detailed information on network behavior by inserting a small amount of information directly inside packets passing
 through network devices where INT functionality is enabled, essentially adding probing functionality to potentially every packet, including customer traffic. 
-This makes INT a very powerful debugging protocol, capable of measuring and recording the `experience' of each tagged packet sent in the network.
+This makes INT a very powerful debugging protocol, capable of measuring and recording the 'experience' of each tagged packet sent in the network.
 
 ![INT workflow](docs/int-workflow.png)
 
@@ -25,12 +25,12 @@ This makes INT a very powerful debugging protocol, capable of measuring and reco
 P4 implementation of INT
 ------
 
-This repository contains P4 code implementing INT data plane functionality. Initially the P4 INT code was developped only for bmv2 but later on it was adapted also for Tofino switches. 
-In this repository, we are trying maintain compatibility both with bmv2 and Tofino switches. Limitations of both platforms have impact on the P4 INT code limitations.
+This repository contains P4 code implementing the INT data plane functionality. Initially the P4 INT code was developped only for bmv2 but later on it was also adapted for Tofino switches. 
+In this repository, we are trying maintain compatibility both with bmv2 and Tofino switches. Limitations of both platforms have impact on the P4 INT code.
 
 A few flavors of INT implementation are available:
-- int.p4app/int_v0.4.json - version 0.4 of the INT protocol; currently most tested version of the INT protocol; it is compatible with the INT implementation contained in the ONOS network operating system; INT version 0.4 documentation is not longer available on p4.org
-- int.p4app/int_v1.0.json - version 1.0 of the INT protocol; under development
+- ./int.p4app/int_v0.4.json - version 0.4 of the INT protocol; currently most tested version of the INT protocol; it is compatible with the INT implementation contained in the ONOS network operating system; INT version 0.4 documentation is not longer available on p4.org
+- ./int.p4app/int_v1.0.json - version 1.0 of the INT protocol; under development
 
 Future plans assumes implementation of the INT specification version 2.0.
 
@@ -39,10 +39,23 @@ Future plans assumes implementation of the INT specification version 2.0.
 INT collector
 ----
 It is simple, pure Python based implemtation of the INT collector suitable for very low packet rate of monitored flows (on our hardware, we can generate no more that 2000 packets per second of total traffic within p4app virtual environment).
-The implementation of the INT collector can be found:
-- int.p4app/scripts/int_collector_influx.py
+The implementation of the INT collector can be found at the following location: `int.p4app/scripts/int_collector_influx.py`. The INT collector is started automatically by INT p4app.
 
-Currently INT collector support only INT reports version 1.0 and can parse INT metadata added by bmv2 switches (INT protocol versions 0.4 and 1.0)
+In order to configure desire InfluxDB destination for INT monitoring data please edit proper p4app manifest file (in example: `./int.p4app/int_v0.4.json`):
+
+```
+{
+	"program": "p4src/int_v0.4/int.p4",
+	"language": "p4-16",
+	"targets": {
+		"custom": {
+			"program": "topo.py --int_version=0.4 --influx hs-04.ipa.psnc.pl:8086"
+		}
+	}
+}
+```
+
+Currently INT collector can parse INT reports version 1.0 and can extract INT metadata added by bmv2 switches (INT collectors supports versions 0.4 and 1.0 of the INT protocol headers).
 
 p4app
 -----
@@ -54,8 +67,7 @@ p4app is a tool that which can be used to build, run, debug, and test P4 program
 Installation
 ------------
 
-1. Install [docker](https://docs.docker.com/engine/installation/) if you don't
-   already have it.
+1. Install [docker](https://docs.docker.com/engine/installation/) if you don't already have it.
 
 2. If you want, put the `p4app` script somewhere in your path. For example:
 
@@ -109,10 +121,11 @@ INT metadata are then stored in the INT Influx database independently deployed u
 ![INT infrastruture topology](docs/p4app-int-topology.png)
 
 
-Additionally, it possible to connect external network to that mininet network by manually creating docker macvlan network which should be called `macvlan_int_0`.
-`p4app` script is responsible for automatic detection of that network and connecting proper macvlan interface to the 'int' container. Existance of `macvlan_int_0` is not mandatory to run and use INT p4app.
+Additionally, it possible to connect external network to the mininet network at bmv2 switch named `s2` (port 5) by manually creating docker macvlan network which should be called `macvlan_int_0`.
+`p4app` script is responsible for automatic detection of that network and connecting proper macvlan interface to the 'int' container. Macvlan interface is available as `eth1` within a running container. 
+Existance of `macvlan_int_0` is not mandatory to run and use INT p4app.
 From our experiance, it is easier to enable traffic leaving mininet to external network than succesfully enabling incoming traffic from external network to mininet.
-If you want connect more external network please check `p4app` bash script. Please check the example in which macvlan network `macvlan_int_0` is connected to the physical port`eth1`:
+Please check the example in which macvlan network `macvlan_int_0` is connected to the physical port`eth1`:
 
 ```
 sudo docker network create -d macvlan \
@@ -124,6 +137,7 @@ sudo docker network create -d macvlan \
 
 ```
  
+ If you want connect more external network please check `p4app` bash script. If you want change to which bmv2 switch external network is connected to please look at `topo.py`.
 
 
 Usage

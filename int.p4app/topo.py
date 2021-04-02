@@ -43,6 +43,8 @@ parser.add_argument('--json', help='Path to JSON config file',
                     type=str, action="store", required=True)
 parser.add_argument('--cli', help='Path to BM CLI',
                     type=str, action="store", required=True)
+parser.add_argument('--int_version', help='The version of INT protocol used',
+                    type=str, action="store", required=True)
 parser.add_argument('--influx', help='INT collector DB access (InfluxDB host:port)',
                     type=str, action="store", required=True)
 args = parser.parse_args()
@@ -79,7 +81,7 @@ def main():
     configure_hosts(net, nb_hosts)
     configure_switches(net, nb_switches, args)
 
-    net.get('h1').cmd('python /tmp/host/default_udp_flow.py')
+    net.get('h1').cmd('python /tmp/host/h1_h2_udp_flow.py')
     time.sleep(1)
     print "Ready !"
 

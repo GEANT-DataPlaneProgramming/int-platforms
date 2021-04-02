@@ -3,7 +3,7 @@
 	"language": "p4-16",
 	"targets": {
 		"custom": {
-			"program": "topo.py --influx hs-04.ipa.psnc.pl:8086"
+			"program": "topo.py --int_version=0.4 --influx hs-04.ipa.psnc.pl:8086"
 		}
 	}
 }
