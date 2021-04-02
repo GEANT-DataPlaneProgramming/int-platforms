@@ -67,7 +67,7 @@ function run-p4app {
   echo "Searching for docker macvlan interface $EXTERNAL_INTERFACE_0"
   if docker network ls -f driver=macvlan | grep -q $EXTERNAL_INTERFACE_0; then
     echo "Adding $EXTERNAL_INTERFACE_0 to docker container $P4APP_NAME"
-    docker network connect EXTERNAL_INTERFACE_0 $P4APP_NAME 
+    docker network connect $EXTERNAL_INTERFACE_0 $P4APP_NAME 
   else
     echo "Interface $EXTERNAL_INTERFACE_0 not found"
   fi
