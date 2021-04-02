@@ -78,8 +78,6 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         }
         #endif
         size = 127;
-        default_action =
-            configure_source(4,4, 0x00cc);
     }
 
 

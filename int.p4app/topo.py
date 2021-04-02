@@ -81,7 +81,8 @@ def main():
     configure_hosts(net, nb_hosts)
     configure_switches(net, nb_switches, args)
 
-    net.get('h1').cmd('python /tmp/host/h1_h2_udp_flow.py')
+    #net.get('h1').cmd('python /tmp/host/h1_h2_udp_flow.py')
+    #net.get('h1').cmd('python /tmp/host/h1_cesnet_udp_flow.py')
     time.sleep(1)
     print "Ready !"
 
