@@ -87,7 +87,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
     }
     state parse_int_header {
         packet.extract(hdr.int_header);
-        verify(hdr.int_header.ver == 1, error.INTVersionNotSupported);
+        verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);
         transition parse_int_data;
     }
     state parse_int_data {

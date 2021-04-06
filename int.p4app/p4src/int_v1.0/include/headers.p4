@@ -109,17 +109,6 @@ header int_header_t {
     bit<16> rsvd3;
 }
 
-
-// INT tail header for TCP/UDP - 4 bytes
-const bit<16> INT_TAIL_HEADER_LEN_BYTES = 4;
-
-header intl4_tail_t {
-    bit<8> next_proto;
-    bit<16> dest_port;
-    bit<2> padding;
-    bit<6> dscp;
-}
-
 const bit<16> INT_ALL_HEADER_LEN_BYTES = INT_SHIM_HEADER_LEN_BYTES + INT_HEADER_LEN_BYTES;
 
 header int_switch_id_t {

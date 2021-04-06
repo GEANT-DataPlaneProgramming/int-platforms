@@ -36,11 +36,11 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
     // ins_mask - instruction_mask defining which information (INT headers types) must added to the packet
     action configure_source(bit<8> max_hop, bit<5> hope_metadata_len, bit<5> ins_cnt, bit<16> ins_mask) {
         hdr.int_shim.setValid();
-        hdr.int_shim.int_type = 1;
+        hdr.int_shim.int_type = INT_TYPE_HOP_BY_HOP;
         hdr.int_shim.len = (bit<8>)INT_ALL_HEADER_LEN_BYTES>>2;
         
         hdr.int_header.setValid();
-        hdr.int_header.ver = 1;
+        hdr.int_header.ver = INT_VERSION;
         hdr.int_header.rep = 0;
         hdr.int_header.c = 0;
         hdr.int_header.e = 0;

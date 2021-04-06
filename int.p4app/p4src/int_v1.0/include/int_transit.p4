@@ -130,7 +130,16 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
         meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 6;
         meta.int_metadata.insert_byte_cnt = meta.int_metadata.insert_byte_cnt + 24;
     }
-
+    
+    // hdr.int_switch_id     0
+    // hdr.int_port_ids       1
+    // hdr.int_hop_latency    2
+    // hdr.int_q_occupancy    3
+    // hdr.int_ingress_tstamp  4
+    // hdr.int_egress_tstamp   5
+    // hdr.int_level2_port_ids   6
+    // hdr.int_egress_port_tx_util   7
+        
     action int_set_header_0003_i0() {
         ;
     }
@@ -145,7 +154,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     action int_set_header_0003_i3() {
         int_set_header_5();
         int_set_header_2();
-        add_2();
+        add_3();
     }
     action int_set_header_0003_i4() {
         int_set_header_1();
@@ -214,6 +223,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     action int_set_header_0407_i0() {
         ;
     }
+    
     action int_set_header_0407_i1() {
         int_set_header_7();
         add_1();
@@ -292,6 +302,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
         int_set_header_4();
         add_6();
     }
+    
 
     table tb_int_inst_0003 {
         actions = {

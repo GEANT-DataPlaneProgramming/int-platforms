@@ -82,6 +82,7 @@ header tcp_t {
 
 const bit<6> IPv4_DSCP_INT = 0x20;   // indicates that INT header in the packet
 const bit<16> INT_SHIM_HEADER_LEN_BYTES = 4;
+const bit<8> INT_TYPE_HOP_BY_HOP = 1;
 
 header intl4_shim_t {
     bit<8> int_type;
@@ -92,6 +93,7 @@ header intl4_shim_t {
 }
 
 const bit<16> INT_HEADER_LEN_BYTES = 8;
+const bit<4> INT_VERSION = 0;
 
 header int_header_t {
     bit<2> ver;

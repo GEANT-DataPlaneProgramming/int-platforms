@@ -87,7 +87,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
     }
     state parse_int_header {
         packet.extract(hdr.int_header);
-        verify(hdr.int_header.ver == 1, error.INTVersionNotSupported);
+        verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);
         transition parse_int_data;
     }
     state parse_int_data {
@@ -120,14 +120,14 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_header);
         
         // local INT node metadata
-        packet.emit(hdr.int_switch_id);
-        packet.emit(hdr.int_port_ids);
-        packet.emit(hdr.int_hop_latency);
-        packet.emit(hdr.int_q_occupancy);
-        packet.emit(hdr.int_ingress_tstamp);
-        packet.emit(hdr.int_egress_tstamp);
-        packet.emit(hdr.int_level2_port_ids);
-        packet.emit(hdr.int_egress_port_tx_util);
+        packet.emit(hdr.int_switch_id);     //bit 1
+        packet.emit(hdr.int_port_ids);       //bit 2
+        packet.emit(hdr.int_hop_latency);   //bit 3
+        packet.emit(hdr.int_q_occupancy);  // bit 4
+        packet.emit(hdr.int_ingress_tstamp);  // bit 5
+        packet.emit(hdr.int_egress_tstamp);   // bit 6
+        packet.emit(hdr.int_level2_port_ids);   // bit 7
+        packet.emit(hdr.int_egress_port_tx_util);  // bit 8
         
         // other INT metadata 
         packet.emit(hdr.int_data);

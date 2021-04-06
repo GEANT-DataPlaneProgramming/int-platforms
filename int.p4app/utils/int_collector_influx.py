@@ -36,7 +36,7 @@ def parse_params():
 
 
 class HopMetadata:
-    def __init__(self, data, ins_map):
+    def __init__(self, data, ins_map, int_version=1):
         self.data = data
         self.ins_map = ins_map
         
@@ -47,7 +47,10 @@ class HopMetadata:
         
         self.__parse_ingress_timestamp()
         self.__parse_egress_timestamp()
-        self.__parse_queue_congestion()
+        if int_version == 0:
+            self.__parse_queue_congestion()
+        elif int_version >= 1:
+            self.__parse_l2_ports()
         self.__parse_egress_port_tx_util()
         
     def __parse_switch_id(self):
@@ -86,10 +89,18 @@ class HopMetadata:
         if self.ins_map & 0x02:
             self.queue_congestion_id = int.from_bytes(self.data.read(1), byteorder='big')
             self.queue_congestion = int.from_bytes(self.data.read(3), byteorder='big')
+            logger.debug('parse queue_congestion_id: %d, queue_congestion: %d' % (self.queue_congestion_id, self.queue_congestion))
+            
+    def  __parse_l2_ports(self):
+        if self.ins_map & 0x02:
+            self.l2_ingress_port_id = int.from_bytes(self.data.read(2), byteorder='big')
+            self.l2_egress_port_id = int.from_bytes(self.data.read(2), byteorder='big')
+            logger.debug('parse L2 ingress port: %d, egress_port: %d' % (self.l2_ingress_port_id , self.l2_egress_port_id))
             
     def  __parse_egress_port_tx_util(self):
         if self.ins_map & 0x01:
             self.egress_port_tx_util = int.from_bytes(self.data.read(4), byteorder='big')
+            logger.debug('parse egress_port_tx_util: %d' % self.egress_port_tx_util)
             
     def unread_data(self):
         return self.data
@@ -140,27 +151,32 @@ class IntReport():
         '''
         
         # report header
-        hdr = data[:16]
-        self.ver = hdr[0] >> 4
-        self.len = hdr[0] & 0x0f
-        self.nprot = hdr[1] >> 5
-        self.rep_md_bits = (hdr[1] & 0x1f) + (hdr[2] >> 7)
-        self.d = hdr[2] & 0x01
-        self.q = hdr[3] >> 7
-        self.f = (hdr[3] >> 6) & 0x01
-        self.hw_id = hdr[3] & 0x3f
+        self.int_report_hdr = data[:16]
+        self.ver = self.int_report_hdr[0] >> 4
+        
+        if self.ver != 1:
+            logger.error("Unsupported INT report version %s - skipping report" % self.int_version)
+            raise Exception("Unsupported INT report version %s - skipping report" % self.int_version)
+        
+        self.len = self.int_report_hdr[0] & 0x0f
+        self.nprot = self.int_report_hdr[1] >> 5
+        self.rep_md_bits = (self.int_report_hdr[1] & 0x1f) + (self.int_report_hdr[2] >> 7)
+        self.d = self.int_report_hdr[2] & 0x01
+        self.q = self.int_report_hdr[3] >> 7
+        self.f = (self.int_report_hdr[3] >> 6) & 0x01
+        self.hw_id = self.int_report_hdr[3] & 0x3f
         self.switch_id, self.seq_num, self.ingress_tstamp = struct.unpack('!3I', orig_data[4:16])
 
         # flow id
-        ip_hdr = data[30:50]
-        udp_hdr = data[50:58]
-        protocol = ip_hdr[9]
+        self.ip_hdr = data[30:50]
+        self.udp_hdr = data[50:58]
+        protocol = self.ip_hdr[9]
         self.flow_id = {
-            'srcip': ip2str(ip_hdr[12:16]),
-            'dstip': ip2str(ip_hdr[16:20]), 
-            'scrp': struct.unpack('!H', udp_hdr[:2])[0],
-            'dstp': struct.unpack('!H', udp_hdr[2:4])[0],
-            'protocol': ip_hdr[9],       
+            'srcip': ip2str(self.ip_hdr[12:16]),
+            'dstip': ip2str(self.ip_hdr[16:20]), 
+            'scrp': struct.unpack('!H', self.udp_hdr[:2])[0],
+            'dstp': struct.unpack('!H', self.udp_hdr[2:4])[0],
+            'protocol': self.ip_hdr[9],       
         }
 
         # check next protocol
@@ -183,9 +199,14 @@ class IntReport():
         '''
         # int shim
         self.int_shim = data[offset:offset + 4]
+        self.int_type = self.int_shim[0]
         self.int_data_len = int(self.int_shim[2]) - 3
+        
+        if self.int_type != 1: 
+            logger.error("Unsupported INT type %s - skipping report" % self.int_type)
+            raise Exception("Unsupported INT type %s - skipping report" % self.int_type)
   
-        '''        
+        '''  INT header version 0.4     
         header int_header_t {
             bit<2> ver;
             bit<2> rep;
@@ -198,16 +219,41 @@ class IntReport():
             bit<16> instruction_mask;
             bit<16> rsvd2;
         }'''
+        
+        '''  INT header version 1.0
+        header int_header_t {
+            bit<4>  ver;
+            bit<2>  rep;
+            bit<1>  c;
+            bit<1>  e;
+            bit<1>  m;
+            bit<7>  rsvd1;
+            bit<3>  rsvd2;
+            bit<5>  hop_metadata_len;   // the length of the metadata added by a single INT node (4-byte words)
+            bit<8>  remaining_hop_cnt;  // how many switches can still add INT metadata
+            bit<16>  instruction_mask;   
+            bit<16> rsvd3;
+        }'''
+
 
         # int header
         self.int_hdr = data[offset + 4:offset + 12]
         self.int_version = self.int_hdr[0] >> 6
-        self.hop_count = self.int_hdr[3]
+        if self.int_version == 0:
+            self.hop_count = self.int_hdr[3]
+        elif self.int_version == 1:
+            self.hop_metadata_len = int(self.int_hdr[2] & 0x1f)
+            self.remaining_hop_cnt = self.int_hdr[3]
+            self.hop_count = int(self.int_data_len / self.hop_metadata_len)
+        else:
+            logger.error("Unsupported INT version %s - skipping report" % self.int_version)
+            raise Exception("Unsupported INT version %s - skipping report" % self.int_version)
+
         self.ins_map = int.from_bytes(self.int_hdr[4:6], byteorder='big') 
 
         # int metadata
         self.int_meta = data[offset + 12:]
-        logger.debug("Metadata (%d bytes) is: %s" % (len(self.int_meta), self.int_meta))
+        logger.debug("Metadata (%d bytes) is: %s" % (len(self.int_meta), binascii.hexlify(self.int_meta)))
         self.hop_metadata = []
         self.int_meta = io.BytesIO(self.int_meta)
         for i in range(self.hop_count):
@@ -219,6 +265,8 @@ class IntReport():
                 logger.info("Metadata left (%s position) is: %s" % (self.int_meta.tell(), self.int_meta))
                 logger.error(e)
                 break
+                
+        logger.debug(vars(self))
             
     def __str__(self):
         hop_info = ''
@@ -260,11 +308,13 @@ class IntCollector():
     def __prepare_report(self, report):
         flow_key = "%(srcip)s, %(dstip)s, %(scrp)s, %(dstp)s, %(protocol)s" % report.flow_id 
         
-        origin_timestamp = report.hop_metadata[0].ingress_timestamp
-        
-        # ingress_timestamp of sink node is crasy delayed - use ingress_timestamp instead
-        destination_timestamp = report.hop_metadata[-1].ingress_timestamp
-        latency_0 = report.hop_metadata[0].hop_latency
+        try:
+            origin_timestamp = report.hop_metadata[-1].ingress_timestamp
+            # ingress_timestamp of sink node is crasy delayed - use ingress_timestamp instead
+            destination_timestamp = report.hop_metadata[0].ingress_timestamp
+        except Exception as e:
+            origin_timestamp, destination_timestamp = 0, 0
+            logger.error("ingress_timestamp in the INT hop is required, %s" % e)
         
         json_report = {
             "measurement": "int_telemetry",
@@ -275,10 +325,15 @@ class IntCollector():
                 "dstts": 1.0*destination_timestamp,
                 "seq": 1.0*report.seq_num,
                 "delay": 1.0*(destination_timestamp-origin_timestamp),
-                "latency_0": report.hop_metadata[0].hop_latency,
-                "latency_1": report.hop_metadata[-1].hop_latency,
                 }
         }
+        
+        last_hop_delay = report.hop_metadata[-1].ingress_timestamp
+        for index, hop in enumerate(reversed(report.hop_metadata)):
+            if "hop_latency" in vars(hop):
+                json_report["fields"]["latency_%d" % index] = hop.hop_latency
+            if "ingress_timestamp" in vars(hop):
+                json_report["fields"]["hop_delay_%d" % index] = hop.ingress_timestamp - last_hop_delay
 
         # add sink_jitter only if can be calculated (not first packet in the flow)  
         if flow_key in self.last_dstts:
@@ -349,9 +404,13 @@ def start_udp_server(args):
     while(True):
         message, address = sock.recvfrom(bufferSize)
         logger.info("Received INT report (%d bytes) from: %s" % (len(message), str(address)))
-        #logger.debug(binascii.hexlify(message))
-        report = unpack_int_report(message)
-        collector.add_report(report)
+        logger.debug(binascii.hexlify(message))
+        try:
+            report = unpack_int_report(message)
+            if report:
+                collector.add_report(report)
+        except Exception as e:
+            logger.exception("Exception during handling the INT report")
 
 
 def test_hopmetadata():
@@ -366,6 +425,7 @@ def test_hopmetadata():
 
 if __name__ == "__main__":
     args = parse_params()
+    args.debug_mode = 1
     if args.debug_mode > 0:
         logger.setLevel(logging.DEBUG)
     start_udp_server(args)
