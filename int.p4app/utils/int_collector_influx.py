@@ -238,8 +238,8 @@ class IntReport():
 
         # int header
         self.int_hdr = data[offset + 4:offset + 12]
-        self.int_version = self.int_hdr[0] >> 4
-        if self.int_version == 0:
+        self.int_version = self.int_hdr[0] >> 4  # version in INT v0.4 has only 2 bits!
+        if self.int_version == 0: # if rep is 0 then it is ok for INT v0.4
             self.hop_count = self.int_hdr[3]
         elif self.int_version == 1:
             self.hop_metadata_len = int(self.int_hdr[2] & 0x1f)
@@ -321,7 +321,7 @@ class IntCollector():
         json_report = {
             "measurement": "int_telemetry",
             "tags": report.flow_id,
-            'time': destination_timestamp,
+            'time': int(time.time()*1e9), # use local time because bmv2 clock is a little slower making time drift 
             "fields": {
                 "origts": 1.0*origin_timestamp,
                 "dstts": 1.0*destination_timestamp,
@@ -428,7 +428,6 @@ def test_hopmetadata():
 
 if __name__ == "__main__":
     args = parse_params()
-    args.debug_mode = 1
     if args.debug_mode > 0:
         logger.setLevel(logging.DEBUG)
     start_udp_server(args)
