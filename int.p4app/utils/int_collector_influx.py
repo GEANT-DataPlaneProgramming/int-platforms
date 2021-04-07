@@ -238,7 +238,7 @@ class IntReport():
 
         # int header
         self.int_hdr = data[offset + 4:offset + 12]
-        self.int_version = self.int_hdr[0] >> 6
+        self.int_version = self.int_hdr[0] >> 4
         if self.int_version == 0:
             self.hop_count = self.int_hdr[3]
         elif self.int_version == 1:

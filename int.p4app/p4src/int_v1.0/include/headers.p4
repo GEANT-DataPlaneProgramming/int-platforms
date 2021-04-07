@@ -124,6 +124,11 @@ header int_hop_latency_t {
     bit<32> hop_latency;
 }
 
+header int_q_occupancy_t {
+    bit<8>  q_id;
+    bit<24> q_occupancy;
+}
+
 header int_ingress_tstamp_t {
     bit<64> ingress_tstamp;
 }
@@ -132,19 +137,15 @@ header int_egress_tstamp_t {
     bit<64> egress_tstamp;
 }
 
-header int_egress_port_tx_util_t {
-    bit<32> egress_port_tx_util;
-}
-
 header int_level2_port_ids_t {
     bit<32> ingress_port_id;
     bit<32> egress_port_id;
 }
 
-header int_q_occupancy_t {
-    bit<8>  q_id;
-    bit<24> q_occupancy;
+header int_egress_port_tx_util_t {
+    bit<32> egress_port_tx_util;
 }
+
 
 const bit<4> INT_REPORT_HEADER_LEN_WORDS = 4;
 const bit<4> INT_REPORT_VERSION = 1;
@@ -173,6 +174,7 @@ struct int_metadata_t {
     bit<1> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet 
     bit<9> sink_reporting_port;    // on which port INT reports must be send to INT collector
     bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
+    bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline 
 }
 
 struct layer34_metadata_t {

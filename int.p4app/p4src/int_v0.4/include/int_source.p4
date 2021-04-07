@@ -44,6 +44,7 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         hdr.int_header.rep = 0;
         hdr.int_header.c = 0;
         hdr.int_header.e = 0;
+        hdr.int_header.m = 0;
         hdr.int_header.rsvd1 = 0;
         hdr.int_header.rsvd2 = 0;
         hdr.int_header.ins_cnt = ins_cnt;

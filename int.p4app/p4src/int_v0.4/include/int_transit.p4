@@ -63,12 +63,11 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     }
     action int_set_header_3() {
         hdr.int_q_occupancy.setValid();
-        hdr.int_q_occupancy.q_id = 8w0;
-        hdr.int_q_occupancy.q_occupancy = 24w2;
+        hdr.int_q_occupancy.q_id = 0; // qid not defined in v1model
+        hdr.int_q_occupancy.q_occupancy = (bit<24>)standard_metadata.enq_qdepth;
     }
     action int_set_header_4() {
         hdr.int_ingress_tstamp.setValid();
-        
         #ifdef BMV2
         start_timestamp.read(hdr.int_ingress_tstamp.ingress_tstamp, 0);
         //bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;   
@@ -78,9 +77,8 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
         hdr.int_egress_tstamp.ingress_tstamp  = (bit<64>)imp.global_tstamp;
         #endif
     }
-    action int_set_header_5() {
+    action int_set_header_5() {  
         hdr.int_egress_tstamp.setValid();
-        
         #ifdef BMV2
         start_timestamp.read(hdr.int_egress_tstamp.egress_tstamp, 0);
         bit<64> _timestamp = (bit<64>)standard_metadata.egress_global_timestamp;
@@ -90,16 +88,17 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
         #endif
     }
     action int_set_header_6() {
-        // TODO: implement queue congestion support in BMv2
         hdr.int_q_congestion.setValid();
+        // no such metadata in v1model
         hdr.int_q_congestion.q_id = 0;
         hdr.int_q_congestion.q_congestion = 0;
     }
     action int_set_header_7() {
-        // TODO: implement tx utilization support in BMv2
         hdr.int_egress_port_tx_util.setValid();
+        // no such metadata in v1model
         hdr.int_egress_port_tx_util.egress_port_tx_util = 0;
     }
+
 
     action add_1() {
         meta.int_metadata.int_hdr_word_len = meta.int_metadata.int_hdr_word_len + 1;
