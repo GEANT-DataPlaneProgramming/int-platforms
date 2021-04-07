@@ -245,6 +245,8 @@ class IntReport():
             self.hop_metadata_len = int(self.int_hdr[2] & 0x1f)
             self.remaining_hop_cnt = self.int_hdr[3]
             self.hop_count = int(self.int_data_len / self.hop_metadata_len)
+            logger.debug("hop_metadata_len: %d, int_data_len: %d, remaining_hop_cnt: %d, hop_count: %d" % (
+                            self.hop_metadata_len, self.int_data_len, self.remaining_hop_cnt, self.hop_count))
         else:
             logger.error("Unsupported INT version %s - skipping report" % self.int_version)
             raise Exception("Unsupported INT version %s - skipping report" % self.int_version)
@@ -258,7 +260,7 @@ class IntReport():
         self.int_meta = io.BytesIO(self.int_meta)
         for i in range(self.hop_count):
             try:
-                hop = HopMetadata(self.int_meta, self.ins_map)
+                hop = HopMetadata(self.int_meta, self.ins_map, self.int_version)
                 self.int_meta = hop.unread_data()
                 self.hop_metadata.append(hop)
             except Exception as e:
@@ -332,8 +334,9 @@ class IntCollector():
         for index, hop in enumerate(reversed(report.hop_metadata)):
             if "hop_latency" in vars(hop):
                 json_report["fields"]["latency_%d" % index] = hop.hop_latency
-            if "ingress_timestamp" in vars(hop):
+            if "ingress_timestamp" in vars(hop) and index > 0:
                 json_report["fields"]["hop_delay_%d" % index] = hop.ingress_timestamp - last_hop_delay
+                last_hop_delay = hop.ingress_timestamp
 
         # add sink_jitter only if can be calculated (not first packet in the flow)  
         if flow_key in self.last_dstts:

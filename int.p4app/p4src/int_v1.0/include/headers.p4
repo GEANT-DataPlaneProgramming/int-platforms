@@ -138,8 +138,8 @@ header int_egress_tstamp_t {
 }
 
 header int_level2_port_ids_t {
-    bit<32> ingress_port_id;
-    bit<32> egress_port_id;
+    bit<16> ingress_port_id;
+    bit<16> egress_port_id;
 }
 
 header int_egress_port_tx_util_t {
