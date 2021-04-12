@@ -76,7 +76,7 @@ def main():
     net.start()
     
     #enable Unix time within bmv2 for purpose of INT functionality
-    setup_start_time(nb_switches)
+    #setup_start_time(nb_switches)
 
     configure_hosts(net, nb_hosts)
     configure_switches(net, nb_switches, args)
