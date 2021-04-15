@@ -94,8 +94,8 @@ mirroring_add 1 {int-reporting-port}
 where:
 * `int-reporting-port` - switch port number where INT reports should be send out from a switch
 
-Here is example of this command allowing INT reporting using switch port 5.
+Here is example of this command allowing INT reporting using switch port 4.
 ```
-mirroring_add 1 5
+mirroring_add 1 4
 ```
 
