@@ -141,6 +141,10 @@ sudo docker network create -d macvlan \
  
  If you want connect more external network please check `p4app` bash script. If you want change to which bmv2 switch external network is connected to please look at `topo.py`.
 
+Configuration
+-----
+
+In order to read how to configure INT functionality for each switch please read: https://github.com/GEANT-DataPlaneProgramming/In_band_telemetry_bmv2/blob/master/docs/configuration.md
 
 Usage
 -----
