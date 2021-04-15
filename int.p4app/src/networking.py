@@ -13,12 +13,12 @@ CONTROL_INT_COLLECTOR_MAC = 'f6:61:c0:6a:14:21'
 
 def quietRunNs(command, namespace='ns_int', display=True, shell=True):
     if display:
-        print "Namespace %s: %s" % (namespace, command)
+        print("Namespace %s: %s" % (namespace, command))
     quietRun('ip netns exec %s %s' % (namespace, command), shell=shell)
     
     
 def _quietRun(command):
-    print command
+    print(command)
     quietRun( command, shell=True )
     
     
@@ -26,7 +26,7 @@ def create_int_collection_network(switches, influxdb):
     '''
     Create a INT collection network composed of a bridge, virtual links to each p4 switch and virtual link to the INT collector
     '''
-    print "..... CREATING INT COLLECTION NETWORK  ........"
+    print("..... CREATING INT COLLECTION NETWORK  ........")
     # INT collection infrastructure resides within 'ns1' namespace
     _quietRun( 'ip netns add ns_int')
     
@@ -37,7 +37,7 @@ def create_int_collection_network(switches, influxdb):
     create_int_collector_link(bridge_name)
     
     for id, switch in enumerate(switches):
-        print "Adding switch id %d" % id 
+        print("Adding switch id %d" % id) 
         create_dp_cpu_link(id, switch, bridge_name)
 
     quietRunNs( 'ip link set up dev %s' % bridge_name)
@@ -47,17 +47,17 @@ def create_int_collection_network(switches, influxdb):
     
     
 def start_int_collector(influxdb):
-    print "\nRunning INT collector"
+    print("\nRunning INT collector")
     
     # forward influx TCP connections to PSNC influx instance (not accessible directly from ns_int namespace where INT collector runs) 
-    print "socat TCP-LISTEN:8086,fork TCP:%s" % influxdb
+    print("socat TCP-LISTEN:8086,fork TCP:%s" % influxdb)
     subprocess.Popen(
         ['/usr/bin/socat','TCP-LISTEN:8086,fork','TCP:%s'%influxdb],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
     
     collector_cmd = 'ip netns exec ns_int python3 /tmp/utils/int_collector_influx.py -i 6000 -H 192.168.0.1:8086 -d 0 &> /dev/null'
-    print collector_cmd
+    print(collector_cmd)
     os.system(collector_cmd)
     
     
@@ -117,12 +117,12 @@ def create_dp_cpu_link(id, switch, bridge_name):
     
     _intf = Intf('veth_dp_%i' % id, node=switch) 
     veth_dp_port = switch.intfNames().index('veth_dp_%i' % id)
-    print  '*** Adding hardware interface', 'veth_dp_%i' % id, 'to switch', switch.name, 'with port index', veth_dp_port, '\n'
+    print('*** Adding hardware interface', 'veth_dp_%i' % id, 'to switch', switch.name, 'with port index', veth_dp_port, '\n')
     return veth_dp_port
     
     
 def create_link_to_external_interface(switch, external_interface_name):
-    print  '*** Adding hardware interface', external_interface_name, 'to switch', switch.name, '\n'
+    print('*** Adding hardware interface', external_interface_name, 'to switch', switch.name, '\n')
     _intf = Intf(external_interface_name, node=switch)
    
     

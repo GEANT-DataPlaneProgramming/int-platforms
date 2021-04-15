@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright 2013-present Barefoot Networks, Inc.
 #
@@ -84,7 +84,7 @@ def main():
     #net.get('h1').cmd('python /tmp/host/h1_h2_udp_flow.py')
     #net.get('h1').cmd('python /tmp/host/h1_cesnet_udp_flow.py')
     time.sleep(1)
-    print "Ready !"
+    print("Ready !")
 
     CLI(net)
     net.stop()
