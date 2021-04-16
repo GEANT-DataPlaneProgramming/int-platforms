@@ -32,7 +32,7 @@ control Forward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_
  #ifdef BMV2
         standard_metadata.egress_spec = port;
 #elif TOFINO
-        ig_tm_md.ucast_egress_port = port; = port;
+        standard_metadata.ucast_egress_port = port; 
 #endif
     }
     action send_to_port(bit<9> port) {
@@ -40,7 +40,7 @@ control Forward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_
 #ifdef BMV2
         standard_metadata.egress_spec = port;
 #elif TOFINO
-        ig_tm_md.ucast_egress_port = port;
+        standard_metadata.ucast_egress_port = port;
 #endif
     }
 

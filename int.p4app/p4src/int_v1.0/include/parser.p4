@@ -91,10 +91,17 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         transition parse_int_data;
     }
     state parse_int_data {
+
         bit<8> int_headers_len_in_words = (bit<8>)(INT_ALL_HEADER_LEN_BYTES)>>2;
         bit<32> int_data_len_in_words = (bit<32>)(hdr.int_shim.len - int_headers_len_in_words);
         bit<32> int_data_len_in_bits =  int_data_len_in_words << 5;
+
+        #ifdef BMV2
         packet.extract(hdr.int_data, int_data_len_in_bits);
+        #elif TOFINO
+        // DAMU: hdr.int_data: argument cannot contain varbit fields
+        /*packet.extract(hdr.int_data, int_data_len_in_bits);*/
+        #endif
         transition accept;
     }
 }
@@ -130,7 +137,9 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_egress_port_tx_util);  // bit 8
         
         // other INT metadata 
+        #ifdef BMV2
         packet.emit(hdr.int_data);
+        #endif
     }
 }
 
@@ -250,7 +259,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
                 hdr.ipv4.dstAddr
             });
         }
-        
+        #ifdef BMV2 
         if(hdr.udp.isValid()&& hdr.int_header.isValid() ){
             hdr.udp.csum= int_csum.update(
             data = {
@@ -287,7 +296,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
                 hdr.udp.len
             });
         }
-        
+        #endif 
         // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -309,7 +318,10 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
         packet.emit(hdr.int_egress_port_tx_util);
 
         // other INT metadata 
+
+        #ifdef BMV2
         packet.emit(hdr.int_data);
+        #endif
     }
 }
 
@@ -351,7 +363,10 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_egress_port_tx_util);
         
         // other INT metadata 
+
+        #ifdef BMV2
         packet.emit(hdr.int_data);
+        #endif
     }
 }
 

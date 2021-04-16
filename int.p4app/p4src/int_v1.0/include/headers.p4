@@ -21,11 +21,12 @@
 #ifndef _HEADERS_P4_
 #define _HEADERS_P4_
 
-#define BMV2 1
-//#define TOFINO 2
+/*#define BMV2 1*/
+/*#define TOFINO 2*/
 
 #ifdef TOFINO
-const bit<32> PORT_METADATA_SIZE = 32w64;  //TOFINO REQUIREMENTS
+// Not required
+/*const bit<32> PORT_METADATA_SIZE = 32w64;  //TOFINO REQUIREMENTS*/
 #endif
 
 
@@ -192,6 +193,8 @@ struct layer34_metadata_t {
 struct metadata {
     int_metadata_t  int_metadata;
     layer34_metadata_t   layer34_metadata;
+    bit<32> l_time;
+    bit<32> h_time;
 }
 
 header int_data_t {
