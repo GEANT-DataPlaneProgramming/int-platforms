@@ -5,6 +5,7 @@ import struct
 import binascii
 import pprint
 import logging
+from copy import copy
 import io
 from influxdb import InfluxDBClient
 
@@ -293,6 +294,7 @@ class IntCollector():
         self.reports = []
         self.last_dstts = {} # save last `dstts` per each monitored flow
         self.last_reordering = {}  # save last `reordering` per each monitored flow
+        self.last_hop_ingress_timestamp = {} #save last ingress timestamp per each hop in each monitored flow
         self.period = period # maximum time delay of int report sending to influx
         self.last_send = time.time() # last time when reports were send to influx
         
@@ -307,12 +309,11 @@ class IntCollector():
             self.__send_reports()
             self.last_send = time.time()
             
-    def __prepare_report(self, report):
-        flow_key = "%(srcip)s, %(dstip)s, %(scrp)s, %(dstp)s, %(protocol)s" % report.flow_id 
-        
+    def __prepare_e2e_report(self, report, flow_key):
+        # e2e report contains information about end-to-end flow delay,         
         try:
             origin_timestamp = report.hop_metadata[-1].ingress_timestamp
-            # ingress_timestamp of sink node is crasy delayed - use ingress_timestamp instead
+            # egress_timestamp of sink node is creasy delayed - use ingress_timestamp instead
             destination_timestamp = report.hop_metadata[0].ingress_timestamp
         except Exception as e:
             origin_timestamp, destination_timestamp = 0, 0
@@ -330,14 +331,6 @@ class IntCollector():
                 }
         }
         
-        last_hop_delay = report.hop_metadata[-1].ingress_timestamp
-        for index, hop in enumerate(reversed(report.hop_metadata)):
-            if "hop_latency" in vars(hop):
-                json_report["fields"]["latency_%d" % index] = hop.hop_latency
-            if "ingress_timestamp" in vars(hop) and index > 0:
-                json_report["fields"]["hop_delay_%d" % index] = hop.ingress_timestamp - last_hop_delay
-                last_hop_delay = hop.ingress_timestamp
-
         # add sink_jitter only if can be calculated (not first packet in the flow)  
         if flow_key in self.last_dstts:
             json_report["fields"]["sink_jitter"] = 1.0*destination_timestamp - self.last_dstts[flow_key]
@@ -353,11 +346,61 @@ class IntCollector():
         self.last_reordering[flow_key] = report.seq_num
         return json_report
         
+        #~ last_hop_delay = report.hop_metadata[-1].ingress_timestamp
+        #~ for index, hop in enumerate(reversed(report.hop_metadata)):
+            #~ if "hop_latency" in vars(hop):
+                #~ json_report["fields"]["latency_%d" % index] = hop.hop_latency
+            #~ if "ingress_timestamp" in vars(hop) and index > 0:
+                #~ json_report["fields"]["hop_delay_%d" % index] = hop.ingress_timestamp - last_hop_delay
+                #~ last_hop_delay = hop.ingress_timestamp
+                
+    def __prepare_hop_report(self, report, index, hop, flow_key):
+        # each INT hop metadata are sent as independed json message to Influx
+        tags = copy(report.flow_id)
+        tags['hop_index'] = index
+        json_report = {
+            "measurement": "int_telemetry",
+            "tags": tags,
+            'time': int(time.time()*1e9), # use local time because bmv2 clock is a little slower making time drift 
+            "fields": {}
+        }
+        
+        # combine flow id with hop index 
+        flow_hop_key = (*flow_key, index)
+        
+        # add sink_jitter only if can be calculated (not first packet in the flow)  
+        if flow_hop_key in self.last_hop_ingress_timestamp:
+            json_report["fields"]["hop_jitter"] =  hop.ingress_timestamp - self.last_hop_ingress_timestamp[flow_hop_key]
+            
+        if "hop_latency" in vars(hop):
+            json_report["fields"]["hop_delay"] = hop.hop_latency
+            
+        if "ingress_timestamp" in vars(hop) and index > 0:
+            json_report["fields"]["link_delay"] = hop.ingress_timestamp - self.last_hop_delay
+            self.last_hop_delay = hop.ingress_timestamp
+            
+        if "ingress_timestamp" in vars(hop):
+            # save hop.ingress_timestamp for purpose of node_jitter calculation
+            self.last_hop_ingress_timestamp[flow_hop_key] = hop.ingress_timestamp
+        return json_report
+        
+        
+    def __prepare_reports(self, report):
+        flow_key = "%(srcip)s, %(dstip)s, %(scrp)s, %(dstp)s, %(protocol)s" % report.flow_id 
+        reports = []
+        reports.append(self.__prepare_e2e_report(report, flow_key))
+        
+        self.last_hop_delay = report.hop_metadata[-1].ingress_timestamp
+        for index, hop in enumerate(reversed(report.hop_metadata)):
+            reports.append(self.__prepare_hop_report(report, index, hop, flow_key))
+        return reports
+        
+        
     def __send_reports(self):
         json_body = []
         for report in self.reports:
             if report.hop_metadata:
-                json_body.append(self.__prepare_report(report))
+                json_body.extend(self.__prepare_reports(report))
             else:
                 logger.warning("Empty report metadata: %s" % str(report))
         logger.info("Json body for influx:\n %s" % pprint.pformat(json_body))
@@ -431,3 +474,6 @@ if __name__ == "__main__":
     if args.debug_mode > 0:
         logger.setLevel(logging.DEBUG)
     start_udp_server(args)
+
+# SELECT mean("node_delay")  FROM int_telemetry  WHERE ("srcip" =~ /^$srcip$/ AND "dstip" =~ /^$dstip$/ AND  "node_index" =~ /^$hop$/) AND $timeFilter  GROUP BY time($interval) fill(null)
+# SELECT mean("node_delay") FROM "int_udp_policy"."int_telemetry" WHERE ("srcip" = '10.0.1.1' AND "dstip" = '10.0.2.2' AND "hop_number" = '0') AND $timeFilter GROUP BY time($__interval) fill(null)
