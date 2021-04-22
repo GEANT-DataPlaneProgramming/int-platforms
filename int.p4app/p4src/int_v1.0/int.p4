@@ -78,14 +78,16 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
                 exit;
 #elif TOFINO
             //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
+
             // time register
             meta.h_time = update_h_time.execute(0);
             meta.l_time = update_l_time.execute(0);
+	        hdr.udp.csum = 0;
 #endif
 
             // in case of INT source port add main INT headers
 
-            Int_source.apply(hdr, meta, ig_intr_md);
+            Int_source.apply(hdr, meta, ig_intr_md, ig_prsr_md);
 
             // perform minimalistic L1 or L2 frame forwarding
             // set egress_port for the frame
