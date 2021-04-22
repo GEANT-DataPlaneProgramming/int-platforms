@@ -82,7 +82,9 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
             // time register
             meta.h_time = update_h_time.execute(0);
             meta.l_time = update_l_time.execute(0);
-	        hdr.udp.csum = 0;
+            if(hdr.udp.isValid()){
+	            hdr.udp.csum = 0;
+            }
 #endif
 
             // in case of INT source port add main INT headers

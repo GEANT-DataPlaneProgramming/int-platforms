@@ -75,7 +75,7 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         #endif
         size = 127;
 	#ifdef TOFINO
-    // DAMU: I need time to write new APIs
+    // DAMU: I need time to write control plane programs
         default_action =
             configure_source(4,10,8, 0xFF);
         #endif
