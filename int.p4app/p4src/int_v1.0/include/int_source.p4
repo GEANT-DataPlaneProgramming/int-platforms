@@ -25,7 +25,7 @@ control Int_source(inout headers hdr, inout metadata meta, inout standard_metada
 
 #elif TOFINO
 
-control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_metadata_t standard_metadata) {
+control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_metadata_t standard_metadata, in ingress_intrinsic_metadata_from_parser_t imp) {
 
 #endif
 
@@ -74,8 +74,11 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         }
         #endif
         size = 127;
-        //default_action =
-        //    configure_source(4,4, 0x00cc);
+	#ifdef TOFINO
+    // DAMU: I need time to write new APIs
+        default_action =
+            configure_source(4,10,8, 0xFF);
+        #endif
     }
 
 
@@ -88,12 +91,20 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         actions = {
             activate_source;
         }
-        #ifdef BMV2
+	#ifdef BMV2
         key = {
             standard_metadata.ingress_port: exact;
         }
-        #endif
+	#endif
         size = 255;
+	#ifdef TOFINO
+       // DAMU: WIP
+       // Set current switch as default INT source
+	   //const entries = {
+		//134: activate_source();
+	//	  132: activate_source();
+	//	}
+	#endif
     }
 
 
@@ -104,12 +115,16 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         // ingress timestamp is not available on Egress pipeline
         meta.int_metadata.ingress_tstamp = standard_metadata.ingress_global_timestamp;
         meta.int_metadata.ingress_port = (bit<16>)standard_metadata.ingress_port;
-        
+        #elif TOFINO
+        meta.int_metadata.ingress_tstamp = imp.global_tstamp;
+        meta.int_metadata.ingress_port = (bit<16>)standard_metadata.ingress_port;
+        #endif
+      #ifdef BMV2 
         //check if packet appeard on ingress port with active INT source
         tb_activate_source.apply();
         
         if (meta.int_metadata.source == 1w1)      
-        #endif
+	#endif
         //TODO: find TOFINO equivalent
             //apply INT source logic on INT monitored flow
             tb_int_source.apply();

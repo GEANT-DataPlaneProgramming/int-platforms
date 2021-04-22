@@ -56,11 +56,10 @@ control PortForward(inout headers hdr, inout metadata meta, inout ingress_intrin
             ig_intr_md.ingress_port : exact; 
             #endif
         }
-        // default ports for FBK
-        /*const entries={*/
-            /*132: send(134);*/
-            /*134: send(132);*/
-        /*}*/
+        const entries={
+            132: send(134);
+            134: send(132);
+        }
         size = 31;
     }
 

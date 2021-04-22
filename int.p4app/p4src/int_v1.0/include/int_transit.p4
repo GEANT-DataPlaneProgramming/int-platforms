@@ -34,6 +34,7 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         // Configure parameters of INT transit node:
         // switch_id which is used within INT node metadata
         // l3_mtu is curently not used but should allow to detect condition if adding new INT metadata will exceed allowed MTU packet size
+
         action configure_transit(bit<32> switch_id, bit<16> l3_mtu) {
             meta.int_metadata.switch_id = switch_id;
             meta.int_metadata.insert_byte_cnt = 0;
@@ -47,9 +48,9 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             actions = {
                 configure_transit;
             }
-            default_action =
-                configure_transit(1, 1500);
+	    default_action = configure_transit(1, 1500);
         }
+
 
         action int_set_header_0() {
             hdr.int_switch_id.setValid();

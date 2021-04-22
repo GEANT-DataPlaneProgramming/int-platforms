@@ -259,44 +259,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
                 hdr.ipv4.dstAddr
             });
         }
-        #ifdef BMV2 
-        if(hdr.udp.isValid()&& hdr.int_header.isValid() ){
-            hdr.udp.csum= int_csum.update(
-            data = {
-                hdr.ipv4.srcAddr,
-                hdr.ipv4.dstAddr,
-                8w0,
-                hdr.ipv4.protocol,
-                hdr.udp.len,
-                hdr.udp.srcPort,
-                hdr.udp.dstPort,
-                hdr.udp.len,
-                hdr.int_shim,
-                hdr.int_header,
-                hdr.int_switch_id,
-                hdr.int_port_ids,
-                hdr.int_q_occupancy,
-                hdr.int_level2_port_ids,
-                hdr.int_ingress_tstamp,
-                hdr.int_egress_tstamp,
-                hdr.int_egress_port_tx_util,
-                hdr.int_hop_latency
-            }, zeros_as_ones = true);
-        }
-        
-        if(hdr.udp.isValid()){
-            hdr.udp.csum= udp_csum.update(
-                {hdr.ipv4.srcAddr,
-                hdr.ipv4.dstAddr,
-                8w0,
-                hdr.ipv4.protocol,
-                hdr.udp.len,
-                hdr.udp.srcPort,
-                hdr.udp.dstPort,
-                hdr.udp.len
-            });
-        }
-        #endif 
+	
         // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -319,9 +282,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
 
         // other INT metadata 
 
-        #ifdef BMV2
-        packet.emit(hdr.int_data);
-        #endif
+        //packet.emit(hdr.int_data);
     }
 }
 
@@ -364,9 +325,7 @@ control EgressDeparser(packet_out packet,
         
         // other INT metadata 
 
-        #ifdef BMV2
-        packet.emit(hdr.int_data);
-        #endif
+        //packet.emit(hdr.int_data);
     }
 }
 
