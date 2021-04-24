@@ -32,6 +32,8 @@ parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout 
 
 parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out ingress_intrinsic_metadata_t standard_metadata) {
 
+
+        Checksum() ipv4_checksum;
 #endif
 
     state start {
@@ -54,6 +56,13 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.layer34_metadata.ip_dst = hdr.ipv4.dstAddr;
         meta.layer34_metadata.ip_ver = 8w4;
         meta.layer34_metadata.dscp = hdr.ipv4.dscp;
+
+        #ifdef TOFINO
+        ipv4_checksum.add(hdr.ipv4);
+        // Output of verify is 0 or 1
+        // If it is 1, there is checksum error
+        ipv4_checksum.verify();
+        #endif
         transition select(hdr.ipv4.protocol) {
             8w0x11: parse_udp;
             8w0x6: parse_tcp;
@@ -82,12 +91,17 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
     }
     state parse_int_shim {
         packet.extract(hdr.int_shim);
+        #ifdef BMV2
         verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);
+        #endif
         transition parse_int_header;
     }
     state parse_int_header {
         packet.extract(hdr.int_header);
+        // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
+        #ifdef BMV2
         verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);
+        #endif
         transition parse_int_data;
     }
     state parse_int_data {
@@ -101,6 +115,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         #elif TOFINO
         // DAMU: hdr.int_data: argument cannot contain varbit fields
         /*packet.extract(hdr.int_data, int_data_len_in_bits);*/
+        packet.extract(hdr.int_data);
         #endif
         transition accept;
     }
@@ -137,9 +152,7 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_egress_port_tx_util);  // bit 8
         
         // other INT metadata 
-        #ifdef BMV2
         packet.emit(hdr.int_data);
-        #endif
     }
 }
 
@@ -233,14 +246,24 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
 }
 
 #elif TOFINO
-
+    parser EgressParser(packet_in        pkt,
+        /* User */
+        out headers          hdr,
+        out metadata         meta,
+        /* Intrinsic */
+        out egress_intrinsic_metadata_t  eg_intr_md)
+    {
+        /* This is a mandatory state, required by Tofino Architecture */
+        state start {
+            pkt.extract(eg_intr_md);
+            transition accept;
+        }
+    }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
 
 control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
     Checksum() ipv4_csum;
-    Checksum() udp_csum;
-    Checksum() int_csum;
     apply {
         if(hdr.ipv4.isValid()){
             hdr.ipv4.hdrChecksum = ipv4_csum.update(
@@ -282,7 +305,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
 
         // other INT metadata 
 
-        //packet.emit(hdr.int_data);
+        packet.emit(hdr.int_data);
     }
 }
 

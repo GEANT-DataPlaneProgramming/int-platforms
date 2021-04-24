@@ -1,0 +1,4 @@
+1. Fix int_report
+    - Fix truncate
+    - some metadata in report_fixed_header cannot be enabled in Tofino
+2. Define trigger for int_sink

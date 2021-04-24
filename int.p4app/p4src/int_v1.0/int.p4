@@ -112,21 +112,6 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         }
     }
 
-#ifdef TOFINO
-    parser EgressParser(packet_in        pkt,
-        /* User */
-        out headers          hdr,
-        out metadata         meta,
-        /* Intrinsic */
-        out egress_intrinsic_metadata_t  eg_intr_md)
-    {
-        /* This is a mandatory state, required by Tofino Architecture */
-        state start {
-            pkt.extract(eg_intr_md);
-            transition accept;
-        }
-    }
-#endif
 #ifdef BMV2
 
     control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t eg_intr_md) {
@@ -154,7 +139,7 @@ control Egress(inout headers hdr, inout metadata meta,
                 Int_sink.apply(hdr, meta, eg_intr_md);    
                 #elif TOFINO
 
-                Int_sink.apply(hdr, meta, eg_intr_md);    
+                Int_sink.apply(hdr, meta, eg_intr_md, eg_prsr_md);    
                 #endif
             }
         }

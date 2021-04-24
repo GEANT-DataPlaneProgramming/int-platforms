@@ -21,9 +21,6 @@
 #ifndef _HEADERS_P4_
 #define _HEADERS_P4_
 
-/*#define BMV2 1*/
-/*#define TOFINO 2*/
-
 #ifdef TOFINO
 // Not required
 /*const bit<32> PORT_METADATA_SIZE = 32w64;  //TOFINO REQUIREMENTS*/
@@ -198,7 +195,7 @@ struct metadata {
 }
 
 header int_data_t {
-    varbit<2048> data;
+    bit<2048> data;
 }
 
 

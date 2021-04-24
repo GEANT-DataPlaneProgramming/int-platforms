@@ -70,6 +70,40 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
     }
 }
 
+#ifdef TOFINO
+control remove_sink_headerT(inout headers hdr){
+    apply{
+         // restore original headers
+        hdr.ipv4.dscp = hdr.int_shim.dscp;
+        // DAMU: Cannot we directly write bits in shim length?
+        bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) ;
+        // Cannot compute it in Tofino due to too complex computation
+        /*bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;*/
+
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
+        if (hdr.udp.isValid()) {
+            hdr.udp.len = hdr.udp.len - len_bytes;
+        }
+
+        // remove INT data added in INT sink
+        hdr.int_switch_id.setInvalid();
+        hdr.int_port_ids.setInvalid();
+        hdr.int_ingress_tstamp.setInvalid();
+        hdr.int_egress_tstamp.setInvalid();
+        hdr.int_hop_latency.setInvalid();
+        hdr.int_level2_port_ids.setInvalid();
+        hdr.int_q_occupancy.setInvalid();
+        hdr.int_egress_port_tx_util.setInvalid();
+        
+        // remove int data
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_data.setInvalid();
+
+    }
+
+}
+#endif
 
 #ifdef BMV2
 
@@ -77,7 +111,7 @@ control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata
 
 #elif TOFINO
 
-control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata) {
+control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
 
 #endif
     
@@ -140,12 +174,12 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
         #elif TOFINO
         //DAMU: I could not find an alternative in Tofino
         // Other can be used as a trigger?
-        /*if (meta.int_metadata.remove_int == 1) {*/
-            /*// remove INT headers from a frame*/
-            /*remove_sink_header();*/
-        /*}*/
+        if (meta.int_metadata.remove_int == 1) {
+            // remove INT headers from a frame
+            remove_sink_headerT.apply(hdr);
+            Int_report.apply(hdr, meta, standard_metadata, imp);
+        }
 
-        /*Int_report.apply(hdr, meta, standard_metadata);*/
 
         #endif
 

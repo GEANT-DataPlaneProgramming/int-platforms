@@ -65,20 +65,16 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         actions = {
             configure_source;
         }
-        #ifdef BMV2
         key = {
             hdr.ipv4.srcAddr     : ternary;
             hdr.ipv4.dstAddr     : ternary;
             meta.layer34_metadata.l4_src: ternary;
             meta.layer34_metadata.l4_dst: ternary;
         }
-        #endif
         size = 127;
-	#ifdef TOFINO
     // DAMU: I need time to write control plane programs
         default_action =
             configure_source(4,10,8, 0xFF);
-        #endif
     }
 
 
@@ -91,20 +87,10 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         actions = {
             activate_source;
         }
-	#ifdef BMV2
         key = {
             standard_metadata.ingress_port: exact;
         }
-	#endif
         size = 255;
-	#ifdef TOFINO
-       // DAMU: WIP
-       // Set current switch as default INT source
-	   //const entries = {
-		//134: activate_source();
-	//	  132: activate_source();
-	//	}
-	#endif
     }
 
 
@@ -119,13 +105,10 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         meta.int_metadata.ingress_tstamp = imp.global_tstamp;
         meta.int_metadata.ingress_port = (bit<16>)standard_metadata.ingress_port;
         #endif
-      #ifdef BMV2 
         //check if packet appeard on ingress port with active INT source
         tb_activate_source.apply();
         
         if (meta.int_metadata.source == 1w1)      
-	#endif
-        //TODO: find TOFINO equivalent
             //apply INT source logic on INT monitored flow
             tb_int_source.apply();
     }

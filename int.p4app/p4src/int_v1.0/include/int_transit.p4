@@ -48,7 +48,6 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             actions = {
                 configure_transit;
             }
-	    default_action = configure_transit(1, 1500);
         }
 
 
