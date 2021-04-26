@@ -75,7 +75,11 @@ Installation
     cp p4app /usr/local/bin
     ```
     
-I have already modified the default docker image to **baru64/int_p4app**, so `p4app` script can be used directly without need to build a p4app docker image with all additional libraries (which can be problematic).
+I have already modified the default docker image to **jaxa/p4app-epoch**, so `p4app` script can be used directly without need to build a p4app docker image with all additional libraries (which can be problematic). 
+* GitHub project for compiling modified p4app docker image: https://github.com/jaxa1337/p4app
+* DockerHub image of modified p4app: https://hub.docker.com/repository/docker/jaxa/p4app-epoch
+
+This docker image contains recompiled versions of bvm2 i p4c supporting 64-bit timestamps initialised directly from hosting Unix epoch time (starting bmv2 switch timestamp clocks are already initialized t Unix epoch wereas in default bmv2 internal clocks starts from zero). 
 For more information about p4app please visit: https://github.com/p4lang/p4app
 
 
