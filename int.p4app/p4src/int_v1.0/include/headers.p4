@@ -188,7 +188,9 @@ struct metadata {
     layer34_metadata_t   layer34_metadata;
     bit<32> l_time;
     bit<32> h_time;
+    #ifdef TOFINO
     bit<8> instance_type;
+    #endif
 }
 
 header int_data_t {

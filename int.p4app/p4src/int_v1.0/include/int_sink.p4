@@ -38,11 +38,11 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
     action configure_sink(bit<9> sink_reporting_port) {
         meta.int_metadata.remove_int = 1w1;   // indicate that INT headers must be removed in egress
         meta.int_metadata.sink_reporting_port = sink_reporting_port; 
-        meta.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
         #ifdef BMV2
         clone3<metadata>(CloneType.I2E, INT_REPORT_MIRROR_SESSION_ID, meta);
         #elif TOFINO
 
+        meta.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
         standard_metadata.copy_to_cpu = 1;
         #endif
     }
