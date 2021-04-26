@@ -70,7 +70,7 @@ def configure_switches(net, nb_switches, args):
             print(" ".join(cmd))
             try:
                 output = subprocess.check_output(cmd, stdin = f)
-                print(output)
+                print(output.decode('ascii'))
             except subprocess.CalledProcessError as e:
                 print(e)
                 print(e.output)
