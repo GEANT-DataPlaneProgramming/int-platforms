@@ -1,4 +1,5 @@
 1. Fix int_report
     - Fix truncate
     - some metadata in report_fixed_header cannot be enabled in Tofino
-2. Define trigger for int_sink
+    - Optimize the computations in int header, e.g., remove left shift and find an alternative way
+2. Define trigger for int_sink [DONE]

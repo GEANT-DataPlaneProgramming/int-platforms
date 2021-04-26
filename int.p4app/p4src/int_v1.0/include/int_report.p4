@@ -64,18 +64,21 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
 
             // DAMU: too complex computation for Tofino
             // We need to optimize the code 
+            #ifdef BMV2
             // 2x ipv4 header + udp header + eth header + report header + int data len
-           /* hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14)*/
-                /*+ ((bit<16>)(INT_REPORT_HEADER_LEN_WORDS)<<2)*/
-                /*+ (((bit<16>)hdr.int_shim.len) << 2 );*/
+            hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14)
+                + ((bit<16>)(INT_REPORT_HEADER_LEN_WORDS)<<2)
+                + (((bit<16>)hdr.int_shim.len) << 2 );
             // add size of original tcp/udp header
-            /*if (hdr.tcp.isValid()) {*/
-                /*[>hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen<]*/
-                    /*[>+ (((bit<16>)hdr.tcp.dataOffset) << 2);<]*/
+            if (hdr.tcp.isValid()) {
+                [>hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen<]
+                    [>+ (((bit<16>)hdr.tcp.dataOffset) << 2);<]
 
-            /*} else {*/
-                /*hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;*/
-            /*}*/
+            } else {
+                hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
+            }
+            #elif TOFINO
+            #endif
             hdr.report_ipv4.id = 0;
             hdr.report_ipv4.flags = 0;
             hdr.report_ipv4.fragOffset = 0;
@@ -88,20 +91,26 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.report_udp.setValid();
             hdr.report_udp.srcPort = 0;
             hdr.report_udp.dstPort = collector_port;
-            /*// ipv4 header + 2x udp header + eth header + report header + int data len*/
-            /*// hdr.report_udp.len = (bit<16>)(20 + 8 + 8 + 14)*/
-            /*//                       + (bit<16>)REPORT_FIXED_HEADER_LEN*/
-            /*//                       + (((bit<16>)hdr.int_shim.len) << 2 );*/
-            /*hdr.report_udp.len = hdr.report_ipv4.totalLen - 20;*/
+            // ipv4 header + 2x udp header + eth header + report header + int data len
+            // hdr.report_udp.len = (bit<16>)(20 + 8 + 8 + 14)
+            //                       + (bit<16>)REPORT_FIXED_HEADER_LEN
+            //                       + (((bit<16>)hdr.int_shim.len) << 2 );
+            #ifdef BMV2
+            hdr.report_udp.len = hdr.report_ipv4.totalLen - 20;
+            #elif TOFINO
+            #endif
 
             // INT report fixed header ************************************************/
             // INT report version 1.0
             hdr.report_fixed_header.setValid();
             // Damu: Cannot find where they are defined
             // Cannot compile in Tofino
-            /*hdr.report_fixed_header.ver = INT_REPORT_VERSION;*/
-            /*hdr.report_fixed_header.len = INT_REPORT_HEADER_LEN_WORDS;*/
-            /*hdr.report_fixed_header.nprot = 0; // 0 for Ethernet*/
+            #ifdef BMV2
+            hdr.report_fixed_header.ver = INT_REPORT_VERSION;
+            hdr.report_fixed_header.len = INT_REPORT_HEADER_LEN_WORDS;
+            hdr.report_fixed_header.nprot = 0; // 0 for Ethernet
+            #elif TOFINO
+            #endif
             hdr.report_fixed_header.rep_md_bits = 0;
             hdr.report_fixed_header.reserved = 0;
             hdr.report_fixed_header.d = 0;

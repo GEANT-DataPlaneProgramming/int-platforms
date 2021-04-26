@@ -21,10 +21,6 @@
 #ifndef _HEADERS_P4_
 #define _HEADERS_P4_
 
-#ifdef TOFINO
-// Not required
-/*const bit<32> PORT_METADATA_SIZE = 32w64;  //TOFINO REQUIREMENTS*/
-#endif
 
 
 #define PKT_INSTANCE_TYPE_NORMAL 0
@@ -192,6 +188,7 @@ struct metadata {
     layer34_metadata_t   layer34_metadata;
     bit<32> l_time;
     bit<32> h_time;
+    bit<8> instance_type;
 }
 
 header int_data_t {

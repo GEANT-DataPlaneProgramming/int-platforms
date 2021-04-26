@@ -38,6 +38,7 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
     action configure_sink(bit<9> sink_reporting_port) {
         meta.int_metadata.remove_int = 1w1;   // indicate that INT headers must be removed in egress
         meta.int_metadata.sink_reporting_port = sink_reporting_port; 
+        meta.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
         #ifdef BMV2
         clone3<metadata>(CloneType.I2E, INT_REPORT_MIRROR_SESSION_ID, meta);
         #elif TOFINO
@@ -163,6 +164,7 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             return;
         
         #ifdef BMV2
+        // @Damian: I think standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL  is not required 
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL && meta.int_metadata.remove_int == 1) {
             // remove INT headers from a frame
             remove_sink_header();
@@ -172,11 +174,11 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             Int_report.apply(hdr, meta, standard_metadata);
         }
         #elif TOFINO
-        //DAMU: I could not find an alternative in Tofino
-        // Other can be used as a trigger?
         if (meta.int_metadata.remove_int == 1) {
             // remove INT headers from a frame
             remove_sink_headerT.apply(hdr);
+        }
+        if (meta.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){
             Int_report.apply(hdr, meta, standard_metadata, imp);
         }
 
