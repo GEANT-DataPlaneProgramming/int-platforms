@@ -14,7 +14,8 @@
 # limitations under the License.
 
 #P4APP_IMAGE=${P4APP_IMAGE:-dingdamu/p4app-ddos:latest}
-P4APP_IMAGE=${P4APP_IMAGE:-baru64/int_p4app:0.1}
+#P4APP_IMAGE=${P4APP_IMAGE:-baru64/int_p4app:0.1}
+P4APP_IMAGE=${P4APP_IMAGE:-jaxa/p4app-epoch}
 P4APP_CONTAINER_ARGS=${P4APP_CONTAINER_ARGS:-""}
 
 P4APP_NAME="int"

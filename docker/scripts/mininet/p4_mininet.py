@@ -38,16 +38,16 @@ class P4Host(Host):
         return r
 
     def describe(self, sw_addr=None, sw_mac=None):
-        print "**********"
-        print "Network configuration for: %s" % self.name
-        print "Default interface: %s\t%s\t%s" %(
+        print("**********")
+        print("Network configuration for: %s" % self.name)
+        print("Default interface: %s\t%s\t%s" %(
             self.defaultIntf().name,
             self.defaultIntf().IP(),
             self.defaultIntf().MAC()
-        )
+        ))
         if sw_addr is not None or sw_mac is not None:
-            print "Default route to switch: %s (%s)" % (sw_addr, sw_mac)
-        print "**********"
+            print("Default route to switch: %s (%s)" % (sw_addr, sw_mac))
+        print("**********")
 
 class P4Switch(Switch):
     """P4 virtual switch"""
@@ -139,7 +139,7 @@ class P4Switch(Switch):
         debug("P4 switch {} PID is {}.\n".format(self.name, pid))
         if not self.check_switch_started(pid):
             error("P4 switch {} did not start correctly.\n".format(self.name))
-           exit(1)
+            exit(1)
         info("P4 switch {} has been started.\n".format(self.name))
 
     def stop(self):

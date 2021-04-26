@@ -8,10 +8,10 @@ ENV NET_TOOLS iputils-arping \
               iputils-tracepath \
               net-tools \
               nmap \
-              python-ipaddr \
-              python-scapy \
               python3-six \
               python3-construct \
+              python3-pip \
+              python3-dev \
               tcpdump \
               traceroute \
               tshark \ 
@@ -37,20 +37,22 @@ ENV MININET_DEPS automake \
                  pep8 \
                  pyflakes \
                  pylint \
-                 python-pexpect \
-                 python-setuptools
+                 python3-pexpect \
+                 python3-setuptools
 ENV DEV_TOOLS nano
 
 # Ignore questions when installing with apt-get:
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends $NET_TOOLS $MININET_DEPS $DEV_TOOLS
+    apt-get install -y -o Dpkg::Options::='--force-confdef' --no-install-recommends $NET_TOOLS $MININET_DEPS
 
 #RUN pip install construct
 # Fix to get tcpdump working
 RUN mv /usr/sbin/tcpdump /usr/bin/tcpdump
 
+RUN pip install ipaddr scapy psutil
+RUN pip install influxdb
 # Install mininet.
 COPY docker/third-party /third-party
 RUN dpkg -i /third-party/python3-six_1.10.0-3_all.deb

@@ -173,7 +173,7 @@ struct int_metadata_t {
     bit<8> int_hdr_word_len;  // counter of inserted INT words
     bit<1> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet 
     bit<9> sink_reporting_port;    // on which port INT reports must be send to INT collector
-    bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
+    bit<64> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
     bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline 
 }
 
