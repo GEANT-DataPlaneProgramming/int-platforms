@@ -21,23 +21,14 @@
 
 
 
-p4 = bfrt.int.pipe.Ingress.h_time
-p4E = bfrt.int.pipe.Ingress.l_time
+p4 = bfrt.int.pipe.Ingress.Int_sink_config.tb_int_sink
 def setUp():
     global p4
-    global p4E
-    import time
-    nstime = int(time.time()* (10**9))
-    print(nstime)
-    l_time = nstime & 0xffffffff
-    h_time = nstime>>32
-    p4.mod(register_index=0, f1=h_time)
-    p4E.mod(register_index=0, f1=l_time)
-    p4.get(from_hw=True)
-    p4E.get(from_hw=True)
+    # To configure when Tofino switch is used as a sink node 
+    p4.add_with_configure_sink(ucast_egress_port=132, sink_reporting_port=132)
+    p4.dump()
 
-while 1:
-    setUp()
+setUp()
 
 
 
