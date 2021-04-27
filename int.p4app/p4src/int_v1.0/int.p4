@@ -73,10 +73,9 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 #endif
 
         apply {	
-#ifdef BMV2
             if (!hdr.udp.isValid() && !hdr.tcp.isValid())
                 exit;
-#elif TOFINO
+#ifdef TOFINO
             //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
 
             // time register
@@ -138,7 +137,6 @@ control Egress(inout headers hdr, inout metadata meta,
                 #ifdef BMV2
                 Int_sink.apply(hdr, meta, eg_intr_md);    
                 #elif TOFINO
-
                 Int_sink.apply(hdr, meta, eg_intr_md, eg_prsr_md);    
                 #endif
             }

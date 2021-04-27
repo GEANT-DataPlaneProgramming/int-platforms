@@ -3,3 +3,4 @@
     - some metadata in report_fixed_header cannot be enabled in Tofino
     - Optimize the computations in int header, e.g., remove left shift and find an alternative way
 2. Define trigger for int_sink [DONE]
+3. Add control plane program for int_sink and int_report [DONE]
