@@ -49,15 +49,7 @@ parser.add_argument('--influx', help='INT collector DB access (InfluxDB host:por
                     type=str, action="store", required=True)
 args = parser.parse_args()
 
-
-def setup_start_time(nb_switches):
-    offset = int(time.time()*1e9)
-    offset -= 1e9 # substract 1sec  to compesate a little earlier bmv2 start
-    print("Setting time offset %d" % offset)
-    for port in [_THRIFT_BASE_PORT+switch_index  for switch_index in range(nb_switches)]: 
-        writeRegister(thrift_port=port, register='start_timestamp', idx=0, value=offset)
         
- 
 def main():
     nb_hosts, nb_switches, links = read_topo()
     topo = MyTopo(args.behavioral_exe,
@@ -75,9 +67,6 @@ def main():
 
     net.start()
     
-    #enable Unix time within bmv2 for purpose of INT functionality
-    #setup_start_time(nb_switches)
-
     configure_hosts(net, nb_hosts)
     configure_switches(net, nb_switches, args)
 
