@@ -193,11 +193,6 @@ struct metadata {
     #endif
 }
 
-header int_data_t {
-    bit<2048> data;
-}
-
-
 struct headers {
     // INT report headers
     ethernet_t                report_ethernet;
@@ -224,9 +219,6 @@ struct headers {
     int_level2_port_ids_t        int_level2_port_ids;
     int_q_occupancy_t           int_q_occupancy;
     int_switch_id_t                int_switch_id;
-    
-    // INT node metadata from previous nodes
-    int_data_t                  int_data;
 }
 
 

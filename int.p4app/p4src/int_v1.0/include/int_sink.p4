@@ -99,7 +99,6 @@ control remove_sink_headerT(inout headers hdr){
         // remove int data
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
-        hdr.int_data.setInvalid();
 
     }
 
@@ -138,7 +137,6 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
         // remove int data
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
-        hdr.int_data.setInvalid();
     }
     
     /*
