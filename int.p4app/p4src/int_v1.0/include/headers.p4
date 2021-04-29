@@ -194,10 +194,6 @@ struct metadata {
     layer34_metadata_t   layer34_metadata;
 }
 
-header int_data_t {
-    varbit<2048> data;
-}
-
 
 struct headers {
     // INT report headers
@@ -215,7 +211,7 @@ struct headers {
     // INT headers
     intl4_shim_t          int_shim;
     int_header_t         int_header;
-
+  
     // local INT node metadata
     int_egress_port_tx_util_t  int_egress_port_tx_util;
     int_egress_tstamp_t         int_egress_tstamp;
@@ -225,9 +221,6 @@ struct headers {
     int_level2_port_ids_t        int_level2_port_ids;
     int_q_occupancy_t           int_q_occupancy;
     int_switch_id_t                int_switch_id;
-    
-    // INT node metadata from previous nodes
-    int_data_t                  int_data;
 }
 
 

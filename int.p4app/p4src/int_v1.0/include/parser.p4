@@ -88,13 +88,6 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
     state parse_int_header {
         packet.extract(hdr.int_header);
         verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);
-        transition parse_int_data;
-    }
-    state parse_int_data {
-        bit<8> int_headers_len_in_words = (bit<8>)(INT_ALL_HEADER_LEN_BYTES)>>2;
-        bit<32> int_data_len_in_words = (bit<32>)(hdr.int_shim.len - int_headers_len_in_words);
-        bit<32> int_data_len_in_bits =  int_data_len_in_words << 5;
-        packet.extract(hdr.int_data, int_data_len_in_bits);
         transition accept;
     }
 }
@@ -128,9 +121,6 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_egress_tstamp);   // bit 6
         packet.emit(hdr.int_level2_port_ids);   // bit 7
         packet.emit(hdr.int_egress_port_tx_util);  // bit 8
-        
-        // other INT metadata 
-        packet.emit(hdr.int_data);
     }
 }
 
@@ -307,9 +297,6 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
-
-        // other INT metadata 
-        packet.emit(hdr.int_data);
     }
 }
 
@@ -349,9 +336,6 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
-        
-        // other INT metadata 
-        packet.emit(hdr.int_data);
     }
 }
 
