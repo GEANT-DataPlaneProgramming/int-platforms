@@ -8,5 +8,5 @@ table_add tb_int_reporting send_report => f6:61:c0:6a:00:00  10.0.1.1  f6:61:c0:
 
 table_add tb_int_transit configure_transit => 1 1500
 table_add tb_forward send_to_port 00:10:db:ff:10:02&&&0xFFFFFFFF => 2 0
-table_add tb_forward send_to_port 00:00:00:00:02:02&&&0xFFFFFFFF => 2 10
+table_add tb_forward send_to_port 00:00:00:00:02:02&&&0xFFFFFFFF => 3 10
 table_add tb_forward send_to_port 00:00:00:00:01:01&&&0xFFFFFFFF => 1 11
