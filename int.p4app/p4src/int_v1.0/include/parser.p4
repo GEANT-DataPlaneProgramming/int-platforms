@@ -59,8 +59,8 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
 
         #ifdef TOFINO
         ipv4_checksum.add(hdr.ipv4);
-        // Output of verify is 0 or 1
-        // If it is 1, there is checksum error
+        /*// Output of verify is 0 or 1*/
+        /*// If it is 1, there is checksum error*/
         ipv4_checksum.verify();
         #endif
         transition select(hdr.ipv4.protocol) {
@@ -235,9 +235,46 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         /* This is a mandatory state, required by Tofino Architecture */
         state start {
             pkt.extract(eg_intr_md);
-            transition accept;
+            transition parse_ethernet;
+    }
+    state parse_ethernet {
+        pkt.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
+            16w0x800: parse_ipv4;
+            default: reject;
         }
     }
+    state parse_ipv4 {
+        pkt.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            8w0x11: parse_udp;
+            8w0x6: parse_tcp;
+            default: reject;
+        }
+    }
+    state parse_tcp {
+        pkt.extract(hdr.tcp);
+        transition select(hdr.ipv4.dscp) {
+            IPv4_DSCP_INT: parse_int_shim;
+            default: reject;
+        }
+    }
+    state parse_udp {
+        pkt.extract(hdr.udp);
+        transition select(hdr.ipv4.dscp, hdr.udp.dstPort) {
+            (6w0x20 &&& 6w0x3f, 16w0x0 &&& 16w0x0): parse_int_shim;
+            default: reject;
+        }
+    }
+    state parse_int_shim {
+        pkt.extract(hdr.int_shim);
+        transition parse_int_header;
+    }
+    state parse_int_header {
+        pkt.extract(hdr.int_header);
+        transition accept;
+    }
+           }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
 
 control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {

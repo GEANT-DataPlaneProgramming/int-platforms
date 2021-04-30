@@ -137,7 +137,7 @@ control Egress(inout headers hdr, inout metadata meta,
                 #ifdef BMV2
                 Int_sink.apply(hdr, meta, eg_intr_md);    
                 #elif TOFINO
-                Int_sink.apply(hdr, meta, eg_intr_md, eg_prsr_md);    
+                /*Int_sink.apply(hdr, meta, eg_intr_md, eg_prsr_md);    */
                 #endif
             }
         }
