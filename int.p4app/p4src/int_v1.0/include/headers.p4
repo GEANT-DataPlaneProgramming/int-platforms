@@ -74,9 +74,6 @@ header tcp_t {
     bit<16> urgPoint;
 }
 
-header skip_header_t {
-    bit<368> skip_data;
-    }
 const bit<6> IPv4_DSCP_INT = 0x20;   // indicates that INT header in the packet
 const bit<16> INT_SHIM_HEADER_LEN_BYTES = 4;
 const bit<8> INT_TYPE_HOP_BY_HOP = 1;
@@ -192,7 +189,6 @@ struct metadata {
     bit<32> l_time;
     bit<32> h_time;
     #ifdef TOFINO
-    skip_header_t skip_header;
     bit<8> instance_type;
     #endif
 }

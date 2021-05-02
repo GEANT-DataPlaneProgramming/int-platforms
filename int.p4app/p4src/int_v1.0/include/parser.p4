@@ -41,7 +41,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         packet.extract(standard_metadata);
         packet.advance(PORT_METADATA_SIZE);
         #endif
-        transition parse_ethernet;
+       transition parse_ethernet;
     }
     state parse_ethernet {
         packet.extract(hdr.ethernet);
@@ -232,6 +232,8 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         /* Intrinsic */
         out egress_intrinsic_metadata_t  eg_intr_md)
     {
+
+        Checksum() ipv4_checksum;
         /* This is a mandatory state, required by Tofino Architecture */
         state start {
             pkt.extract(eg_intr_md);
@@ -241,37 +243,57 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         pkt.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             16w0x800: parse_ipv4;
-            default: reject;
+            default: accept;
         }
     }
     state parse_ipv4 {
         pkt.extract(hdr.ipv4);
+        meta.layer34_metadata.ip_src = hdr.ipv4.srcAddr;
+        meta.layer34_metadata.ip_dst = hdr.ipv4.dstAddr;
+        meta.layer34_metadata.ip_ver = 8w4;
+        meta.layer34_metadata.dscp = hdr.ipv4.dscp;
+
+        #ifdef TOFINO
+        ipv4_checksum.add(hdr.ipv4);
+        /*// Output of verify is 0 or 1*/
+        /*// If it is 1, there is checksum error*/
+        ipv4_checksum.verify();
+        #endif
         transition select(hdr.ipv4.protocol) {
             8w0x11: parse_udp;
             8w0x6: parse_tcp;
-            default: reject;
+            default: accept;
         }
     }
     state parse_tcp {
         pkt.extract(hdr.tcp);
-        transition select(hdr.ipv4.dscp) {
+        meta.layer34_metadata.l4_src = hdr.tcp.srcPort;
+        meta.layer34_metadata.l4_dst = hdr.tcp.dstPort;
+        meta.layer34_metadata.l4_proto = 8w0x6;
+        transition select(meta.layer34_metadata.dscp) {
             IPv4_DSCP_INT: parse_int_shim;
-            default: reject;
+            default: accept;
         }
     }
     state parse_udp {
         pkt.extract(hdr.udp);
-        transition select(hdr.ipv4.dscp, hdr.udp.dstPort) {
+        meta.layer34_metadata.l4_src = hdr.udp.srcPort;
+        meta.layer34_metadata.l4_dst = hdr.udp.dstPort;
+        meta.layer34_metadata.l4_proto = 8w0x11;
+        transition select(meta.layer34_metadata.dscp, hdr.udp.dstPort) {
             (6w0x20 &&& 6w0x3f, 16w0x0 &&& 16w0x0): parse_int_shim;
-            default: reject;
+            default: accept;
         }
     }
     state parse_int_shim {
         pkt.extract(hdr.int_shim);
+        verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);
         transition parse_int_header;
     }
     state parse_int_header {
         pkt.extract(hdr.int_header);
+        // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
+        verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);
         transition accept;
     }
            }
@@ -281,6 +303,9 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
 
     Checksum() ipv4_csum;
     apply {
+        // Updating and checking of the checksum is done in the deparser.
+        // Checksumming units are only available in the parser sections of
+        // the program
         if(hdr.ipv4.isValid()){
             hdr.ipv4.hdrChecksum = ipv4_csum.update(
             {
@@ -297,7 +322,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
                 hdr.ipv4.srcAddr,
                 hdr.ipv4.dstAddr
             });
-        }
+               }
 	
         // original headers
         packet.emit(hdr.ethernet);
@@ -332,7 +357,29 @@ control EgressDeparser(packet_out packet,
                                     /* Intrinsic */
                                     in    egress_intrinsic_metadata_for_deparser_t  eg_dprsr_md) {
     
+    Checksum() ipv4_csum;
     apply {
+        // Updating and checking of the checksum is done in the deparser.
+        // Checksumming units are only available in the parser sections of
+        // the program
+        if(hdr.ipv4.isValid()){
+            hdr.ipv4.hdrChecksum = ipv4_csum.update(
+            {
+                hdr.ipv4.version,
+                hdr.ipv4.ihl,
+                hdr.ipv4.dscp,
+                hdr.ipv4.ecn,
+                hdr.ipv4.totalLen,
+                hdr.ipv4.id,
+                hdr.ipv4.flags,
+                hdr.ipv4.fragOffset,
+                hdr.ipv4.ttl,
+                hdr.ipv4.protocol,
+                hdr.ipv4.srcAddr,
+                hdr.ipv4.dstAddr
+            });
+               }
+
         // raport headers
         packet.emit(hdr.report_ethernet);
         packet.emit(hdr.report_ipv4);
