@@ -111,7 +111,8 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.report_ipv4);
         packet.emit(hdr.report_udp);
         packet.emit(hdr.report_fixed_header);
-        
+        // Bridge metadata at ingress to egress
+        packet.emit(meta.int_metadata);
         // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -237,6 +238,10 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         /* This is a mandatory state, required by Tofino Architecture */
         state start {
             pkt.extract(eg_intr_md);
+            transition parse_bridge;
+    }
+    state parse_bridge{
+            pkt.extract(meta.bridge);
             transition parse_ethernet;
     }
     state parse_ethernet {
@@ -323,7 +328,8 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
                 hdr.ipv4.dstAddr
             });
                }
-	
+        // bridge header
+        packet.emit(meta.bridge);
         // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);

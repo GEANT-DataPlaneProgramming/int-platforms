@@ -19,7 +19,7 @@
 ################################################################################
 
 
-
+# Deprecated
 
 p4 = bfrt.int.pipe.Ingress.h_time
 p4E = bfrt.int.pipe.Ingress.l_time

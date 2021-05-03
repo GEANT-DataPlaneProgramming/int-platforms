@@ -56,31 +56,13 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         inout ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md,
         inout ingress_intrinsic_metadata_for_tm_t ig_tm_md)
     {
-        Register<data_t, data_t>(1) h_time;
-        RegisterAction<data_t, data_t, data_t>(h_time)
-            update_h_time = {
-                void apply(inout data_t value, out data_t result) {
-                    result = value;
-                }
-            };
-        Register<data_t, data_t>(1) l_time;
-        RegisterAction<data_t, data_t, data_t>(l_time)
-            update_l_time = {
-                void apply(inout data_t value, out data_t result) {
-                    result = value;
-                }
-            };
-#endif
+        #endif
 
         apply {	
             if (!hdr.udp.isValid() && !hdr.tcp.isValid())
                 exit;
 #ifdef TOFINO
-            //TODO: find TOFINO equivalent to skip frames other that TCP or UDP
 
-            // time register
-            meta.h_time = update_h_time.execute(0);
-            meta.l_time = update_l_time.execute(0);
             if(hdr.udp.isValid()){
 	            hdr.udp.csum = 0;
             }

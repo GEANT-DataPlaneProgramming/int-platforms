@@ -181,7 +181,10 @@ struct layer34_metadata_t {
     bit<16> l3_mtu;
     bit<6>  dscp;
 }
-
+header bridge_h{
+    bit<48> ingress_tstamp;
+    bit<16> ingress_port;
+}
 
 struct metadata {
     int_metadata_t  int_metadata;
@@ -190,6 +193,7 @@ struct metadata {
     bit<32> h_time;
     #ifdef TOFINO
     bit<8> instance_type;
+    bridge_h bridge;
     #endif
 }
 
