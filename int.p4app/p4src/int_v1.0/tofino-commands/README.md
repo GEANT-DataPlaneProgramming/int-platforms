@@ -1,7 +1,7 @@
 How to run control plane commands
 ---------------------------------
 ```
-p4sh -b [Full path]/[python script name]
+bfshell -b [Absolute path]/[python script name]
 ```
 
-e.g., p4sh -b p4sh -b ~/int/tofino-commands/configure_source.py
+e.g., bfshell -b ~/int/tofino-commands/configure_source.py
