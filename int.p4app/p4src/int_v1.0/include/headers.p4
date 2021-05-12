@@ -189,8 +189,6 @@ header bridge_h{
 struct metadata {
     int_metadata_t  int_metadata;
     layer34_metadata_t   layer34_metadata;
-    bit<32> l_time;
-    bit<32> h_time;
     #ifdef TOFINO
     bit<8> instance_type;
     bridge_h bridge;
