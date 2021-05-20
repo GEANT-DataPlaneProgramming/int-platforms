@@ -5,3 +5,5 @@
 2. Define trigger for int_sink [DONE]
 3. Add control plane program for int_sink and int_report [DONE]
 4. Fix int_sink (it seems that the code breaks the constraints of Tofino)
+    - To Fix the computation of hdr.udp.len (the unique problem of sink, to discuss with Damian)
+    - Move remove_int and instance_type to bridge header

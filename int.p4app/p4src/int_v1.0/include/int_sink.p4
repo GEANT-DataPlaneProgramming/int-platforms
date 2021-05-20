@@ -77,14 +77,14 @@ control remove_sink_headerT(inout headers hdr){
          // restore original headers
         hdr.ipv4.dscp = hdr.int_shim.dscp;
         // DAMU: Cannot we directly write bits in shim length?
-        bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) ;
+        /*bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) ;*/
         // Cannot compute it in Tofino due to too complex computation
         /*bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;*/
 
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
-        if (hdr.udp.isValid()) {
-            hdr.udp.len = hdr.udp.len - len_bytes;
-        }
+        /*hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;*/
+        /*if (hdr.udp.isValid()) {*/
+            /*hdr.udp.len = hdr.udp.len - len_bytes;*/
+        /*}*/
 
         // remove INT data added in INT sink
         hdr.int_switch_id.setInvalid();
