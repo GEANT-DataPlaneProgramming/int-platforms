@@ -241,7 +241,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             transition parse_bridge;
     }
     state parse_bridge{
-            pkt.extract(meta.bridge);
+            pkt.extract(meta.int_metadata);
             transition parse_ethernet;
     }
     state parse_ethernet {
@@ -329,7 +329,7 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
             });
                }
         // bridge header
-        packet.emit(meta.bridge);
+        packet.emit(meta.int_metadata);
         // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);

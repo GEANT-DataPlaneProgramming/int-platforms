@@ -79,7 +79,7 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
 
 
     action activate_source() {
-        meta.int_metadata.source = 1w1;
+        meta.int_metadata.source = 8w1;
     }
     
     // table used to active INT source for a ingress port of the switch
@@ -102,14 +102,14 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         meta.int_metadata.ingress_port = (bit<16>)standard_metadata.ingress_port;
         #elif TOFINO
         // I need to use bridge to pass customized metadata to egress pipeline
-        meta.bridge.setValid();
-        meta.bridge.ingress_tstamp = imp.global_tstamp;
-        meta.bridge.ingress_port = (bit<16>)standard_metadata.ingress_port;
+        meta.int_metadata.setValid();
+        meta.int_metadata.ingress_tstamp = imp.global_tstamp;
+        meta.int_metadata.ingress_port = (bit<16>)standard_metadata.ingress_port;
         #endif
         //check if packet appeard on ingress port with active INT source
         tb_activate_source.apply();
         
-        if (meta.int_metadata.source == 1w1)      
+        if (meta.int_metadata.source == 8w1)      
             //apply INT source logic on INT monitored flow
             tb_int_source.apply();
     }

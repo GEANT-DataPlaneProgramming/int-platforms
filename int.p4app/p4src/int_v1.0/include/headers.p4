@@ -159,6 +159,7 @@ header int_report_fixed_header_t {
     bit<32> ingress_tstamp;
 }
 
+#ifdef BMV2
 struct int_metadata_t {
     bit<1>  source;    // is INT source functionality enabled
     bit<1>  sink;        // is INT sink functionality enabled
@@ -170,7 +171,21 @@ struct int_metadata_t {
     bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
     bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline 
 }
-
+#elif TOFINO
+// in the header of tofino, the metadata should be a multiple of 8 bits.
+header int_metadata_t {
+    bit<8>  source;    // is INT source functionality enabled
+    bit<8>  sink;        // is INT sink functionality enabled
+    bit<32> switch_id;  // INT switch id is configured by network controller
+    bit<16>  insert_byte_cnt;  // counter of inserted INT bytes
+    bit<8> int_hdr_word_len;  // counter of inserted INT words
+    bit<8> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet
+    bit<16> sink_reporting_port;    // on which port INT reports must be send to INT collector
+    bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
+    bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline
+    bit<8> instance_type;
+}
+#endif
 struct layer34_metadata_t {
     bit<32> ip_src;
     bit<32> ip_dst;
@@ -181,17 +196,11 @@ struct layer34_metadata_t {
     bit<16> l3_mtu;
     bit<6>  dscp;
 }
-header bridge_h{
-    bit<48> ingress_tstamp;
-    bit<16> ingress_port;
-}
 
 struct metadata {
     int_metadata_t  int_metadata;
     layer34_metadata_t   layer34_metadata;
     #ifdef TOFINO
-    bit<8> instance_type;
-    bridge_h bridge;
     #endif
 }
 
