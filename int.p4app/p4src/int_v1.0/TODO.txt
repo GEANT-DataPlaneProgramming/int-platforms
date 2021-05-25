@@ -1,9 +1,10 @@
 1. Fix int_report
-    - Fix truncate
-    - some metadata in report_fixed_header cannot be enabled in Tofino
-    - Optimize the computations in int header, e.g., remove left shift and find an alternative way
+    - Fix truncate (I need to fully understand what "truncate" does)
+    - some metadata in report_fixed_header cannot be enabled in Tofino[DONE]
+    - Optimize the computations in int header, e.g., remove left shift and find an alternative way (To discuss with Damian)
 2. Define trigger for int_sink [DONE]
 3. Add control plane program for int_sink and int_report [DONE]
 4. Fix int_sink (it seems that the code breaks the constraints of Tofino)
     - To Fix the computation of hdr.udp.len (the unique problem of sink, to discuss with Damian)
-    - Move remove_int and instance_type to bridge header
+        x Possible solution: use match action table, define the compuations in the match-action table
+    - Move remove_int and instance_type to int_metadata header [DONE]
