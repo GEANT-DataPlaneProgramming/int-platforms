@@ -1,7 +1,7 @@
 /*
- * Copyright 2020 PSNC
+ * Copyright 2020-2021 PSNC, FBK
  *
- * Author: Damian Parniewicz
+ * Author: Damian Parniewicz, Damu Ding
  *
  * Created in the GN4-3 project.
  *

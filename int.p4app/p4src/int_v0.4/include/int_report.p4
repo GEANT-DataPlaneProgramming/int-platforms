@@ -1,5 +1,9 @@
-  /*
- * Copyright 2020 Bartosz Krakowiak
+/*
+ * Copyright 2020-2021 PSNC, FBK
+ *
+ * Author: Bartosz Krakowiak, Damu Ding
+ *
+ * Created in the GN4-3 project.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
