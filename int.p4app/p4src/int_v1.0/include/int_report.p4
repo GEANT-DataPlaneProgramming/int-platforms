@@ -82,6 +82,11 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
                 hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
             }
             #elif TOFINO
+            hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14)
+                + ((bit<16>)(INT_REPORT_HEADER_LEN_WORDS)<<2)
+                + (INT_SHIM_HEADER_LEN_BYTES << 2 );
+            // Damu: I think we currently only consider udp?
+            hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
             #endif
             hdr.report_ipv4.id = 0;
             hdr.report_ipv4.flags = 0;
@@ -95,25 +100,27 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.report_udp.setValid();
             hdr.report_udp.srcPort = 0;
             hdr.report_udp.dstPort = collector_port;
+            // Damu: I do not understand why it is commented by Damian's side
             // ipv4 header + 2x udp header + eth header + report header + int data len
             // hdr.report_udp.len = (bit<16>)(20 + 8 + 8 + 14)
             //                       + (bit<16>)REPORT_FIXED_HEADER_LEN
             //                       + (((bit<16>)hdr.int_shim.len) << 2 );
-            #ifdef BMV2
             hdr.report_udp.len = hdr.report_ipv4.totalLen - 20;
-            #elif TOFINO
-            #endif
 
             // INT report fixed header ************************************************/
             // INT report version 1.0
             hdr.report_fixed_header.setValid();
-            // Damu: Cannot find where they are defined
-            // Cannot compile in Tofino
-            #ifdef BMV2
             hdr.report_fixed_header.ver = INT_REPORT_VERSION;
             hdr.report_fixed_header.len = INT_REPORT_HEADER_LEN_WORDS;
+
+            #ifdef BMV2
             hdr.report_fixed_header.nprot = 0; // 0 for Ethernet
             #elif TOFINO
+            // Damu: Strange, I cannot enable this metadata in Tofino
+            /*egress::hdr.report_fixed_header.nprot<3b>*/
+            /*egress::hdr.report_fixed_header.len<4b>*/
+            /*egress::hdr.report_fixed_header.ver<4b>*/
+            /*hdr.report_fixed_header.nprot = 3w0; // 0 for Ethernet*/
             #endif
             hdr.report_fixed_header.rep_md_bits = 0;
             hdr.report_fixed_header.reserved = 0;
@@ -141,9 +148,7 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             #ifdef BMV2
             truncate((bit<32>)hdr.report_ipv4.totalLen + 14);
             #elif TOFINO
-            // DAMU: DAMIAN, is it possible to truncate the data by using 
-            // header[0: hdr.report_ipv4.totalLen + 14]? Tofino does not 
-            // support truncate
+            // TODO
 
             #endif
             }

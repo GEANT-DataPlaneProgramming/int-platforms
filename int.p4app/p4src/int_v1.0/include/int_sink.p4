@@ -43,6 +43,7 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
         #elif TOFINO
 
         meta.int_metadata.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
+        // To use mirror
         standard_metadata.copy_to_cpu = 1;
         #endif
     }
@@ -76,15 +77,14 @@ control remove_sink_headerT(inout headers hdr){
     apply{
          // restore original headers
         hdr.ipv4.dscp = hdr.int_shim.dscp;
-        // DAMU: Cannot we directly write bits in shim length?
-        /*bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) ;*/
-        // Cannot compute it in Tofino due to too complex computation
-        /*bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;*/
+        // Constant
+        // len_bytes = 4
+        bit<16> len_bytes = INT_SHIM_HEADER_LEN_BYTES;
 
-        /*hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;*/
-        /*if (hdr.udp.isValid()) {*/
-            /*hdr.udp.len = hdr.udp.len - len_bytes;*/
-        /*}*/
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
+        if (hdr.udp.isValid()) {
+            hdr.udp.len = hdr.udp.len - len_bytes;
+        }
 
         // remove INT data added in INT sink
         hdr.int_switch_id.setInvalid();
