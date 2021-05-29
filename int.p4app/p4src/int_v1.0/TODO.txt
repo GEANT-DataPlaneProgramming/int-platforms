@@ -1,6 +1,8 @@
 1. Fix int_report
     - Fix truncate (I need to fully understand what "truncate" does)
-       x Use mirror
+       x Use mirror [DONE]
+       x write pd-rpc script to configure truncate [DONE] 
+       x I need to know the maximum packet length
     - some metadata in report_fixed_header cannot be enabled in Tofino[DONE]
     - Optimize the computations in int header, e.g., remove left shift and find an alternative way (To discuss with Damian)[DONE]
     - Minor problem: I cannot enable nprot metadata, strange.
@@ -9,3 +11,6 @@
 4. Fix int_sink (it seems that the code breaks the constraints of Tofino)
     - To Fix the computation of hdr.udp.len (the unique problem of sink, to discuss with Damian) [DONE]
     - Move remove_int and instance_type to int_metadata header [DONE]
+5. Check compatibility with SDE 9.5.0
+    - Upgrade SDE
+        x Dependencies are not available for SDE 9.5.0

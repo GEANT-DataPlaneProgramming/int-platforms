@@ -364,6 +364,7 @@ control EgressDeparser(packet_out packet,
                                     in    egress_intrinsic_metadata_for_deparser_t  eg_dprsr_md) {
     
     Checksum() ipv4_csum;
+    Mirror() mirror;
     apply {
         // Updating and checking of the checksum is done in the deparser.
         // Checksumming units are only available in the parser sections of
@@ -385,8 +386,11 @@ control EgressDeparser(packet_out packet,
                 hdr.ipv4.dstAddr
             });
                }
-
-        // raport headers
+        // Send the mirror of hdr to collector
+        if (meta.int_metadata.mirror_type == 1) {
+            mirror.emit((bit<10>)meta.int_metadata.session_ID);
+        }
+        // report headers
         packet.emit(hdr.report_ethernet);
         packet.emit(hdr.report_ipv4);
         packet.emit(hdr.report_udp);

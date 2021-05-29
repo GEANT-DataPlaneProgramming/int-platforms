@@ -184,6 +184,8 @@ header int_metadata_t {
     bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
     bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline
     bit<8> instance_type;
+    bit<16> session_ID;
+    bit<8> mirror_type;
 }
 #endif
 struct layer34_metadata_t {
