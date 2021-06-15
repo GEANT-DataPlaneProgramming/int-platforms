@@ -40,6 +40,26 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         #ifdef TOFINO
         packet.extract(standard_metadata);
         packet.advance(PORT_METADATA_SIZE);
+        meta.int_metadata.source = 0;
+        meta.int_metadata.sink = 0;
+        meta.int_metadata.switch_id = 0;
+        meta.int_metadata.insert_byte_cnt = 0;
+        meta.int_metadata.int_hdr_word_len = 0;
+        meta.int_metadata.remove_int = 0;
+        meta.int_metadata.sink_reporting_port = 0;
+        meta.int_metadata.ingress_tstamp = 0;
+        meta.int_metadata.ingress_port = 0;
+        meta.int_metadata.instance_type = 0;
+        meta.int_metadata.session_ID = 0;
+        meta.int_metadata.mirror_type = 0;
+        meta.layer34_metadata.ip_src = 0;
+        meta.layer34_metadata.ip_dst = 0;
+        meta.layer34_metadata.ip_ver = 0;
+        meta.layer34_metadata.l4_src = 0;
+        meta.layer34_metadata.l4_dst = 0;
+        meta.layer34_metadata.l4_proto = 0;
+        meta.layer34_metadata.l3_mtu = 0;
+        meta.layer34_metadata.dscp = 0;
         #endif
        transition parse_ethernet;
     }
@@ -238,6 +258,26 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         /* This is a mandatory state, required by Tofino Architecture */
         state start {
             pkt.extract(eg_intr_md);
+            meta.int_metadata.source = 0;
+            meta.int_metadata.sink = 0;
+            meta.int_metadata.switch_id = 0;
+            meta.int_metadata.insert_byte_cnt = 0;
+            meta.int_metadata.int_hdr_word_len = 0;
+            meta.int_metadata.remove_int = 0;
+            meta.int_metadata.sink_reporting_port = 0;
+            meta.int_metadata.ingress_tstamp = 0;
+            meta.int_metadata.ingress_port = 0;
+            meta.int_metadata.instance_type = 0;
+            meta.int_metadata.session_ID = 0;
+            meta.int_metadata.mirror_type = 0;
+            meta.layer34_metadata.ip_src = 0;
+            meta.layer34_metadata.ip_dst = 0;
+            meta.layer34_metadata.ip_ver = 0;
+            meta.layer34_metadata.l4_src = 0;
+            meta.layer34_metadata.l4_dst = 0;
+            meta.layer34_metadata.l4_proto = 0;
+            meta.layer34_metadata.l3_mtu = 0;
+            meta.layer34_metadata.dscp = 0;
             transition parse_bridge;
     }
     state parse_bridge{
