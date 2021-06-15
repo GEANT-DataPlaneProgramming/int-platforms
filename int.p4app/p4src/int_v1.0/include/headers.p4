@@ -203,6 +203,7 @@ struct metadata {
     int_metadata_t  int_metadata;
     layer34_metadata_t   layer34_metadata;
     #ifdef TOFINO
+    bit<10> eg_session_id;
     #endif
 }
 

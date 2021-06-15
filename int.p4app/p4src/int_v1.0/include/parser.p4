@@ -50,7 +50,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.int_metadata.ingress_tstamp = 0;
         meta.int_metadata.ingress_port = 0;
         meta.int_metadata.instance_type = 0;
-        meta.int_metadata.session_ID = 0;
+        meta.int_metadata.session_ID = 1;
         meta.int_metadata.mirror_type = 0;
         meta.layer34_metadata.ip_src = 0;
         meta.layer34_metadata.ip_dst = 0;
@@ -268,7 +268,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             meta.int_metadata.ingress_tstamp = 0;
             meta.int_metadata.ingress_port = 0;
             meta.int_metadata.instance_type = 0;
-            meta.int_metadata.session_ID = 0;
+            meta.int_metadata.session_ID = 1;
             meta.int_metadata.mirror_type = 0;
             meta.layer34_metadata.ip_src = 0;
             meta.layer34_metadata.ip_dst = 0;
@@ -282,6 +282,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
     }
     state parse_bridge{
             pkt.extract(meta.int_metadata);
+            meta.eg_session_id = (bit<10>)meta.int_metadata.session_ID;
             transition parse_ethernet;
     }
     state parse_ethernet {
@@ -428,7 +429,7 @@ control EgressDeparser(packet_out packet,
                }
         // Send the mirror of hdr to collector
         if (meta.int_metadata.mirror_type == 1) {
-            mirror.emit((bit<10>)meta.int_metadata.session_ID);
+            mirror.emit(meta.eg_session_id);
         }
         // report headers
         packet.emit(hdr.report_ethernet);
