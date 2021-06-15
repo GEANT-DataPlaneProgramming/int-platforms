@@ -275,7 +275,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         meta.layer34_metadata.l4_src = hdr.tcp.srcPort;
         meta.layer34_metadata.l4_dst = hdr.tcp.dstPort;
         meta.layer34_metadata.l4_proto = 8w0x6;
-        transition select(hdr.ipv4.dscp) {
+        transition select(meta.layer34_metadata.dscp) {
             IPv4_DSCP_INT: parse_int_shim;
             default: accept;
         }
