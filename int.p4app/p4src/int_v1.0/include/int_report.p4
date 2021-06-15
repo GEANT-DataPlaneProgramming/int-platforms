@@ -156,6 +156,7 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
                 actions = {
                     send_report;
                 }
+                size = 512;
             }
 
         apply {

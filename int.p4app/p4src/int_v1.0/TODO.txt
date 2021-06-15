@@ -13,4 +13,5 @@
     - Move remove_int and instance_type to int_metadata header [DONE]
 5. Check compatibility with SDE 9.5.0
     - Upgrade SDE
-        x Dependencies are not available for SDE 9.5.0
+        x Install SDE 9.5.0 on ONL 4.14.151 [DONE]
+    - Meet an internal compiler error. To submit a bug report.

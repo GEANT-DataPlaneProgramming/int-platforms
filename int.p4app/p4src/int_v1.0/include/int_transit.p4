@@ -48,6 +48,8 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             actions = {
                 configure_transit;
             }
+
+            size = 512;
         }
 
 
@@ -370,6 +372,7 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
                 0xE0 &&& 0xF0 : int_set_header_0003_i14();
                 0xF0 &&& 0xF0 : int_set_header_0003_i15();
             }
+            size = 512;
         }
 
         table tb_int_inst_0407 {
@@ -412,6 +415,8 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
                 0x0E &&& 0x0F : int_set_header_0407_i14();
                 0x0F &&& 0x0F : int_set_header_0407_i15();
             }
+
+            size = 512;
         }
 
         action int_hop_cnt_increment() {

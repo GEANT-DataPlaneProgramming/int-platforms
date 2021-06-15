@@ -91,13 +91,13 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
     }
     state parse_int_shim {
         packet.extract(hdr.int_shim);
-        verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);
+        /*verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);*/
         transition parse_int_header;
     }
     state parse_int_header {
         packet.extract(hdr.int_header);
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
-        verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);
+        /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
         transition accept;
     }
 }
@@ -275,7 +275,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         meta.layer34_metadata.l4_src = hdr.tcp.srcPort;
         meta.layer34_metadata.l4_dst = hdr.tcp.dstPort;
         meta.layer34_metadata.l4_proto = 8w0x6;
-        transition select(meta.layer34_metadata.dscp) {
+        transition select(hdr.ipv4.dscp) {
             IPv4_DSCP_INT: parse_int_shim;
             default: accept;
         }
@@ -292,13 +292,13 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
     }
     state parse_int_shim {
         pkt.extract(hdr.int_shim);
-        verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);
+        /*verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);*/
         transition parse_int_header;
     }
     state parse_int_header {
         pkt.extract(hdr.int_header);
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
-        verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);
+        /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
         transition accept;
     }
            }
