@@ -15,3 +15,7 @@
     - Upgrade SDE
         x Install SDE 9.5.0 on ONL 4.14.151 [DONE]
     - Test compatibility [DONE] 
+6. Test scripts provided by our collaborators
+    - Time synchronization
+    - PTF tests
+7. Test int_sink and check if the packet header format is correct
