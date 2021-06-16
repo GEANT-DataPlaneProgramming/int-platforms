@@ -113,15 +113,7 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.report_fixed_header.ver = INT_REPORT_VERSION;
             hdr.report_fixed_header.len = INT_REPORT_HEADER_LEN_WORDS;
 
-            #ifdef BMV2
             hdr.report_fixed_header.nprot = 0; // 0 for Ethernet
-            #elif TOFINO
-            // Damu: Strange, I cannot enable this metadata in Tofino
-            /*egress::hdr.report_fixed_header.nprot<3b>*/
-            /*egress::hdr.report_fixed_header.len<4b>*/
-            /*egress::hdr.report_fixed_header.ver<4b>*/
-            /*hdr.report_fixed_header.nprot = 3w0; // 0 for Ethernet*/
-            #endif
             hdr.report_fixed_header.rep_md_bits = 0;
             hdr.report_fixed_header.reserved = 0;
             hdr.report_fixed_header.d = 0;

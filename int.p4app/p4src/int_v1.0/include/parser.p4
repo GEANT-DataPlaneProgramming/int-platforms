@@ -47,9 +47,10 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.int_metadata.int_hdr_word_len = 0;
         meta.int_metadata.remove_int = 0;
         meta.int_metadata.sink_reporting_port = 0;
-        meta.int_metadata.ingress_tstamp = 0;
+        /*meta.int_metadata.ingress_tstamp = 0;*/
         meta.int_metadata.ingress_port = 0;
         meta.int_metadata.instance_type = 0;
+        // Better not to touch session_ID = 0 
         meta.int_metadata.session_ID = 1;
         meta.int_metadata.mirror_type = 0;
         meta.layer34_metadata.ip_src = 0;
@@ -60,6 +61,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.layer34_metadata.l4_proto = 0;
         meta.layer34_metadata.l3_mtu = 0;
         meta.layer34_metadata.dscp = 0;
+        meta.eg_session_id = 0;
         #endif
        transition parse_ethernet;
     }

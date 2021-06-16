@@ -144,6 +144,7 @@ header int_egress_port_tx_util_t {
 const bit<4> INT_REPORT_HEADER_LEN_WORDS = 4;
 const bit<4> INT_REPORT_VERSION = 1;
 
+#ifdef BMV2
 header int_report_fixed_header_t {
     bit<4> ver;
     bit<4> len;
@@ -158,6 +159,23 @@ header int_report_fixed_header_t {
     bit<32> seq_num;
     bit<32> ingress_tstamp;
 }
+#elif TOFINO
+// The header should be byte-aligned
+header int_report_fixed_header_t {
+    bit<4> ver;
+    bit<4> len;
+    bit<4> nprot;
+    bit<8> rep_md_bits;
+    bit<8> reserved;
+    bit<4> d;
+    bit<4> q;
+    bit<4> f;
+    bit<8> hw_id;
+    bit<32> switch_id;
+    bit<32> seq_num;
+    bit<32> ingress_tstamp;
+}
+#endif
 
 #ifdef BMV2
 struct int_metadata_t {
