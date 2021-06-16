@@ -45,7 +45,7 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
         meta.int_metadata.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
         // To use mirror
         meta.int_metadata.mirror_type = 1;
-        meta.int_metadata.session_ID = (bit<16>)INT_REPORT_MIRROR_SESSION_ID;
+        meta.int_metadata.session_ID = (bit<10>)INT_REPORT_MIRROR_SESSION_ID;
         #endif
     }
     
