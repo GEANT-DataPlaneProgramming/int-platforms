@@ -155,7 +155,6 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.int_egress_tstamp);   // bit 6
         packet.emit(hdr.int_level2_port_ids);   // bit 7
         packet.emit(hdr.int_egress_port_tx_util);  // bit 8
-        
     }
 }
 
@@ -395,7 +394,6 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
-
     }
 }
 
@@ -464,7 +462,6 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
-        
     }
 }
 

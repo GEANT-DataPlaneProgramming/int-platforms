@@ -17,9 +17,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef BMV2
-register<bit<64>> (1) start_timestamp;
-#endif
 
 #ifdef BMV2
 
@@ -52,7 +49,6 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             size = 512;
             #endif
         }
-
 
         action int_set_header_0() {
             hdr.int_switch_id.setValid();

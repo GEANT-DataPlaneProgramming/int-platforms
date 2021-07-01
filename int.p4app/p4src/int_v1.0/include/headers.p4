@@ -186,7 +186,7 @@ struct int_metadata_t {
     bit<8> int_hdr_word_len;  // counter of inserted INT words
     bit<1> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet 
     bit<16> sink_reporting_port;    // on which port INT reports must be send to INT collector
-    bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
+    bit<64> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
     bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline 
 }
 #elif TOFINO
@@ -224,6 +224,7 @@ struct metadata {
     #endif
 }
 
+
 struct headers {
     // INT report headers
     ethernet_t                report_ethernet;
@@ -240,7 +241,7 @@ struct headers {
     // INT headers
     intl4_shim_t          int_shim;
     int_header_t         int_header;
-
+  
     // local INT node metadata
     int_egress_port_tx_util_t  int_egress_port_tx_util;
     int_egress_tstamp_t         int_egress_tstamp;
