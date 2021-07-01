@@ -20,8 +20,8 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*#define BMV2 1*/
-#define TOFINO 2
+#define BMV2 1
+/* #define TOFINO 2 */
 
 #include <core.p4>
 
@@ -45,7 +45,7 @@ typedef bit<32> data_t;
 
 #ifdef BMV2
 
-control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t ig_intr_md) {
+    control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_t ig_intr_md) {
 
 #elif TOFINO
 
@@ -61,6 +61,7 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
         apply {	
             if (!hdr.udp.isValid() && !hdr.tcp.isValid())
                 exit;
+                
 #ifdef TOFINO
 
             if(hdr.udp.isValid()){
@@ -69,9 +70,12 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 #endif
 
             // in case of INT source port add main INT headers
-
+            #ifdef BMV2
+            Int_source.apply(hdr, meta, ig_intr_md);
+            #elif TOFINO
             Int_source.apply(hdr, meta, ig_intr_md, ig_prsr_md);
-
+            #endif
+            
             // perform minimalistic L1 or L2 frame forwarding
             // set egress_port for the frame
             #ifdef BMV2
@@ -96,9 +100,10 @@ control ingress(inout headers hdr, inout metadata meta, inout standard_metadata_
 #ifdef BMV2
 
     control egress(inout headers hdr, inout metadata meta, inout standard_metadata_t eg_intr_md) {
+    
 #elif TOFINO 
 
-control Egress(inout headers hdr, inout metadata meta, 
+    control Egress(inout headers hdr, inout metadata meta, 
             /* Intrinsic */    
             in    egress_intrinsic_metadata_t                  eg_intr_md,
             in    egress_intrinsic_metadata_from_parser_t      eg_prsr_md,

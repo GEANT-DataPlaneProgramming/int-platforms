@@ -79,7 +79,7 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
 
 
     action activate_source() {
-        meta.int_metadata.source = 8w1;
+        meta.int_metadata.source = 1;
     }
     
     // table used to active INT source for a ingress port of the switch
@@ -109,7 +109,7 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         //check if packet appeard on ingress port with active INT source
         tb_activate_source.apply();
         
-        if (meta.int_metadata.source == 8w1)      
+        if (meta.int_metadata.source == 1)      
             //apply INT source logic on INT monitored flow
             tb_int_source.apply();
     }
