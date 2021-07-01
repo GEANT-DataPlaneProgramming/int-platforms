@@ -1,7 +1,7 @@
 /*
- * Copyright 2020 PSNC
+ * Copyright 2020-2021 PSNC, FBK
  *
- * Author: Damian Parniewicz
+ * Author: Damian Parniewicz, Damu Ding
  *
  * Created in the GN4-3 project.
  *
@@ -32,7 +32,7 @@ control Forward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_
  #ifdef BMV2
         standard_metadata.egress_spec = port;
 #elif TOFINO
-        ig_tm_md.ucast_egress_port = port; = port;
+        standard_metadata.ucast_egress_port = port; 
 #endif
     }
     action send_to_port(bit<9> port) {
@@ -40,7 +40,7 @@ control Forward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_
 #ifdef BMV2
         standard_metadata.egress_spec = port;
 #elif TOFINO
-        ig_tm_md.ucast_egress_port = port;
+        standard_metadata.ucast_egress_port = port;
 #endif
     }
 

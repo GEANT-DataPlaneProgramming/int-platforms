@@ -1,7 +1,7 @@
 /*
- * Copyright 2020 PSNC
+ * Copyright 2020-2021 PSNC, FBK
  *
- * Author: Damian Parniewicz
+ * Author: Damian Parniewicz, Damu Ding
  *
  * Created in the GN4-3 project.
  *
@@ -24,7 +24,7 @@ control PortForward(inout headers hdr, inout metadata meta, inout standard_metad
 
 #elif TOFINO
 
-control PortForward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
+control PortForward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata, in ingress_intrinsic_metadata_t ig_intr_md) {
 
 #endif
 
@@ -33,16 +33,17 @@ control PortForward(inout headers hdr, inout metadata meta, inout ingress_intrin
         #ifdef BMV2
         standard_metadata.egress_spec = port;
         #elif TOFINO
-        ig_tm_md.ucast_egress_port = port;
+        standard_metadata.ucast_egress_port = port;
         #endif
     }
-    action drop() {
-        #ifdef BMV2
-        // TODO mark_to_drop
-        #elif TOFINO
-        ig_dprsr_md.drop_ctl = 1;
-        #endif
-    }
+    // DAMU: Let's remove it
+    /*action drop() {*/
+        /*#ifdef BMV2*/
+        /*// TODO mark_to_drop*/
+        /*#elif TOFINO*/
+        /*ig_dprsr_md.drop_ctl = 1;*/
+        /*#endif*/
+    /*}*/
 
     table tb_port_forward {
         actions = {

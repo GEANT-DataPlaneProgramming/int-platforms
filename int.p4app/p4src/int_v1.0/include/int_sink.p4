@@ -1,7 +1,7 @@
-  /*
- * Copyright 2020 PSNC
+/*
+ * Copyright 2020-2021 PSNC, FBK
  *
- * Author: Damian Parniewicz
+ * Author: Damian Parniewicz, Damu Ding
  *
  * Created in the GN4-3 project.
  *
@@ -35,10 +35,18 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
 
 #endif
     
-    action configure_sink(bit<9> sink_reporting_port) {
-        meta.int_metadata.remove_int = 1w1;   // indicate that INT headers must be removed in egress
-        meta.int_metadata.sink_reporting_port = sink_reporting_port; 
+    action configure_sink(bit<16> sink_reporting_port) {
+        meta.int_metadata.remove_int = 1;   // indicate that INT headers must be removed in egress
+        meta.int_metadata.sink_reporting_port = (bit<16>)sink_reporting_port; 
+        #ifdef BMV2
         clone3<metadata>(CloneType.I2E, INT_REPORT_MIRROR_SESSION_ID, meta);
+        #elif TOFINO
+
+        meta.int_metadata.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
+        // To use mirror
+        meta.int_metadata.mirror_type = 1;
+        meta.int_metadata.session_ID = (bit<10>)INT_REPORT_MIRROR_SESSION_ID;
+        #endif
     }
     
    //table used to activate INT sink for particular egress port of the switch
@@ -65,6 +73,38 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
     }
 }
 
+#ifdef TOFINO
+control remove_sink_headerT(inout headers hdr){
+    apply{
+         // restore original headers
+        hdr.ipv4.dscp = hdr.int_shim.dscp;
+        // Constant
+        // len_bytes = 4
+        bit<16> len_bytes = INT_SHIM_HEADER_LEN_BYTES;
+
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
+        if (hdr.udp.isValid()) {
+            hdr.udp.len = hdr.udp.len - len_bytes;
+        }
+
+        // remove INT data added in INT sink
+        hdr.int_switch_id.setInvalid();
+        hdr.int_port_ids.setInvalid();
+        hdr.int_ingress_tstamp.setInvalid();
+        hdr.int_egress_tstamp.setInvalid();
+        hdr.int_hop_latency.setInvalid();
+        hdr.int_level2_port_ids.setInvalid();
+        hdr.int_q_occupancy.setInvalid();
+        hdr.int_egress_port_tx_util.setInvalid();
+        
+        // remove int data
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+
+    }
+
+}
+#endif
 
 #ifdef BMV2
 
@@ -72,7 +112,7 @@ control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata
 
 #elif TOFINO
 
-control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
+control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
 
 #endif
     
@@ -122,6 +162,8 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
         if (!hdr.int_header.isValid())
             return;
         
+        #ifdef BMV2
+        // @Damian: I think standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL  is not required 
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL && meta.int_metadata.remove_int == 1) {
             // remove INT headers from a frame
             remove_sink_header();
@@ -130,6 +172,17 @@ control Int_sink(inout headers hdr, inout metadata meta, inout ingress_intrinsic
             // prepare an INT report for the INT collector
             Int_report.apply(hdr, meta, standard_metadata);
         }
+        #elif TOFINO
+        if (meta.int_metadata.remove_int == 1) {
+            // remove INT headers from a frame
+            remove_sink_headerT.apply(hdr);
+        }
+        if (meta.int_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){
+            Int_report.apply(hdr, meta, standard_metadata, imp);
+        }
+
+
+        #endif
 
     }
 }
