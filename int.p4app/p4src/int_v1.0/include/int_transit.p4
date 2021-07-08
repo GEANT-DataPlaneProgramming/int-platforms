@@ -87,7 +87,6 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         action int_set_header_4() {
             hdr.int_ingress_tstamp.setValid();
 #ifdef BMV2
-            start_timestamp.read(hdr.int_ingress_tstamp.ingress_tstamp, 0);
             //bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;   
             bit<64> _timestamp = (bit<64>)meta.int_metadata.ingress_tstamp;  
             hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + 1000 * _timestamp;
@@ -102,7 +101,6 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
         action int_set_header_5() {
             hdr.int_egress_tstamp.setValid();
 #ifdef BMV2
-            start_timestamp.read(hdr.int_egress_tstamp.egress_tstamp, 0);
             bit<64> _timestamp = (bit<64>)standard_metadata.egress_global_timestamp;
             hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + 1000 * _timestamp;
 #elif TOFINO
