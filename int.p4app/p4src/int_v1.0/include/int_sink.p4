@@ -35,8 +35,8 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
 
 #endif
     
-    action configure_sink(bit<9> sink_reporting_port) {
-        meta.int_metadata.remove_int = 8w1;   // indicate that INT headers must be removed in egress
+    action configure_sink(bit<16> sink_reporting_port) {
+        meta.int_metadata.remove_int = 1;   // indicate that INT headers must be removed in egress
         meta.int_metadata.sink_reporting_port = (bit<16>)sink_reporting_port; 
         #ifdef BMV2
         clone3<metadata>(CloneType.I2E, INT_REPORT_MIRROR_SESSION_ID, meta);
@@ -100,6 +100,7 @@ control remove_sink_headerT(inout headers hdr){
         // remove int data
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
+	//hdr.int_data.setInvalid();
 
     }
 
@@ -179,6 +180,7 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
         }
         if (meta.int_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){
             Int_report.apply(hdr, meta, standard_metadata, imp);
+      
         }
 
 

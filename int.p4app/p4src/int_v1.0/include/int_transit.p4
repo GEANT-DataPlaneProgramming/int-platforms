@@ -17,9 +17,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef BMV2
-register<bit<64>> (1) start_timestamp;
-#endif
 
 #ifdef BMV2
 
@@ -48,10 +45,10 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             actions = {
                 configure_transit;
             }
-
+            #if TOFINO
             size = 512;
+            #endif
         }
-
 
         action int_set_header_0() {
             hdr.int_switch_id.setValid();
@@ -372,7 +369,9 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
                 0xE0 &&& 0xF0 : int_set_header_0003_i14();
                 0xF0 &&& 0xF0 : int_set_header_0003_i15();
             }
+            #if TOFINO
             size = 512;
+            #endif
         }
 
         table tb_int_inst_0407 {
@@ -415,8 +414,9 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
                 0x0E &&& 0x0F : int_set_header_0407_i14();
                 0x0F &&& 0x0F : int_set_header_0407_i15();
             }
-
+            #if TOFINO
             size = 512;
+            #endif
         }
 
         action int_hop_cnt_increment() {

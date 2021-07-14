@@ -69,14 +69,16 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             // DAMU: too complex computation for Tofino
             // We need to optimize the code 
             #ifdef BMV2
+            
             // 2x ipv4 header + udp header + eth header + report header + int data len
             hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14)
                 + ((bit<16>)(INT_REPORT_HEADER_LEN_WORDS)<<2)
                 + (((bit<16>)hdr.int_shim.len) << 2 );
+                
             // add size of original tcp/udp header
             if (hdr.tcp.isValid()) {
-                [>hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen<]
-                    [>+ (((bit<16>)hdr.tcp.dataOffset) << 2);<]
+                hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen
+                    + (((bit<16>)hdr.tcp.dataOffset) << 2);
 
             } else {
                 hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
@@ -148,7 +150,9 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
                 actions = {
                     send_report;
                 }
+                #if TOFINO
                 size = 512;
+                #endif
             }
 
         apply {
