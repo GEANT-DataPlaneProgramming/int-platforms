@@ -358,11 +358,14 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         transition parse_int_data;
          /*transition accept;*/
     }
+<<<<<<< HEAD
     state parse_int_data {
         pkt.extract(hdr.int_data);
         transition accept;
      }
 
+=======
+>>>>>>> 222ed169db960a6dae0c7a01ac07f58f1fb0906e
 }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
 
@@ -393,11 +396,14 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
             );
         }
         
+<<<<<<< HEAD
         // Send the mirror of hdr to collector
         if (meta.int_metadata.mirror_type == 1) {
             mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.int_metadata.mirror_type});
         }
 
+=======
+>>>>>>> 222ed169db960a6dae0c7a01ac07f58f1fb0906e
         // bridge header
         packet.emit(meta.int_metadata);
         
@@ -474,9 +480,19 @@ control EgressDeparser(packet_out packet,
                     hdr.ipv4.dstAddr
                 }
             );
+<<<<<<< HEAD
         }
         
                 
+=======
+        }
+        
+        // Send the mirror of hdr to collector
+        if (meta.int_metadata.mirror_type == 1) {
+            mirror.emit(meta.int_metadata.session_ID);
+        }
+        
+>>>>>>> 222ed169db960a6dae0c7a01ac07f58f1fb0906e
         // report headers
         packet.emit(hdr.report_ethernet);
         packet.emit(hdr.report_ipv4);
@@ -502,8 +518,12 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
+<<<<<<< HEAD
 	//packet.emit(hdr.int_data);
 	}
+=======
+    }
+>>>>>>> 222ed169db960a6dae0c7a01ac07f58f1fb0906e
 }
 
 #endif

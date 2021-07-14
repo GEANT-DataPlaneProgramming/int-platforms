@@ -239,7 +239,6 @@ header int_data_t {
 }
 
 
-
 struct headers {
     // INT report headers
     ethernet_t                report_ethernet;

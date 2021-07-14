@@ -18,8 +18,6 @@
  * limitations under the License.
  */
 
-register<bit<64>> (1) start_timestamp;
-
 #ifdef BMV2
 
 control Int_transit(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
@@ -59,7 +57,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     }
     action int_set_header_2() {
         hdr.int_hop_latency.setValid();
-        hdr.int_hop_latency.hop_latency = (bit<32>)(standard_metadata.egress_global_timestamp - standard_metadata.ingress_global_timestamp);
+        hdr.int_hop_latency.hop_latency = (bit<32>)(standard_metadata.egress_global_timestamp - meta.int_metadata.ingress_tstamp);
     }
     action int_set_header_3() {
         hdr.int_q_occupancy.setValid();
@@ -69,10 +67,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     action int_set_header_4() {
         hdr.int_ingress_tstamp.setValid();
         #ifdef BMV2
-        start_timestamp.read(hdr.int_ingress_tstamp.ingress_tstamp, 0);
-        //bit<64> _timestamp = (bit<64>)standard_metadata.ingress_global_timestamp;   
-        bit<64> _timestamp = (bit<64>)meta.int_metadata.ingress_tstamp;  
-        hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + 1000 * _timestamp;
+        hdr.int_ingress_tstamp.ingress_tstamp = meta.int_metadata.ingress_tstamp * 1000; //convert us to ns
         #elif TOFINO
         hdr.int_egress_tstamp.ingress_tstamp  = (bit<64>)imp.global_tstamp;
         #endif
@@ -80,9 +75,7 @@ control Int_transit(inout headers hdr, inout metadata meta, in ingress_intrinsic
     action int_set_header_5() {  
         hdr.int_egress_tstamp.setValid();
         #ifdef BMV2
-        start_timestamp.read(hdr.int_egress_tstamp.egress_tstamp, 0);
-        bit<64> _timestamp = (bit<64>)standard_metadata.egress_global_timestamp;
-        hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + 1000 * _timestamp;
+        hdr.int_egress_tstamp.egress_tstamp = standard_metadata.egress_global_timestamp * 1000; //convert us to ns
         #elif TOFINO
         hdr.int_egress_tstamp.egress_tstamp = (bit<64>)imp.global_tstamp +1; // TODO
         #endif

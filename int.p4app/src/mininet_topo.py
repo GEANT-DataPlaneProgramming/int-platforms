@@ -8,7 +8,7 @@ class MyTopo(Topo):
     def __init__(self, sw_path, json_path, nb_hosts, nb_switches, links, **opts):
         # Initialize topology and default options
         Topo.__init__(self, **opts)
-        for i in xrange(nb_switches):
+        for i in range(nb_switches):
            self.addSwitch('s%d' % (i + 1),
                             sw_path = sw_path,
                             json_path = json_path,
@@ -17,7 +17,7 @@ class MyTopo(Topo):
                             device_id = i,
                             enable_debugger = True)
 
-        for h in xrange(nb_hosts):
+        for h in range(nb_hosts):
             self.addHost('h%d' % (h + 1), ip="10.0.%d.%d" % ((h + 1) , (h + 1)),
                     mac="00:00:00:00:0%d:0%d" % ((h+1), (h+1)))
 
@@ -46,13 +46,13 @@ def read_topo():
 
        
 def configure_hosts(net, nb_hosts):
-    for n in xrange(nb_hosts):
+    for n in range(nb_hosts):
         h = net.get('h%d' % (n + 1))
         for off in ["rx", "tx", "sg"]:
             cmd = "/sbin/ethtool --offload eth0 %s off" % off
-            print cmd
+            print(cmd)
             h.cmd(cmd)
-        print "disable ipv6"
+        print("disable ipv6")
         h.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
         h.cmd("sysctl -w net.ipv6.conf.default.disable_ipv6=1")
         h.cmd("sysctl -w net.ipv6.conf.lo.disable_ipv6=1")
@@ -62,18 +62,18 @@ def configure_hosts(net, nb_hosts):
 
 
 def configure_switches(net, nb_switches, args):    
-    for i in xrange(nb_switches):
+    for i in range(nb_switches):
         cmd = [args.cli, "--json", args.json,
                "--thrift-port", str(_THRIFT_BASE_PORT + i)
                ]
         with open("commands/commands"+str((i+1))+".txt", "r") as f:
-            print " ".join(cmd)
+            print(" ".join(cmd))
             try:
                 output = subprocess.check_output(cmd, stdin = f)
-                print output
+                print(output.decode('ascii'))
             except subprocess.CalledProcessError as e:
-                print e
-                print e.output
+                print(e)
+                print(e.output)
 
         s = net.get('s%d' % (i + 1))
         s.cmd("sysctl -w net.ipv6.conf.all.disable_ipv6=1")
