@@ -224,8 +224,8 @@ struct metadata {
     int_metadata_t  int_metadata;
     intl4_shim_t          int_shim;
     layer34_metadata_t   layer34_metadata;
-    mirror_h mirror_md;
     #ifdef TOFINO
+    mirror_h mirror_md;
     #endif
 }
 
@@ -234,8 +234,8 @@ header int_data_t {
     // change this depending on the INT data embedded  
     // currently this is only needed for the last switch to extract necessary int metadata
     // Damu: Value to check
-    // bits for mask 0xCC (1 hop)
-    bit<416> data;
+    // 320 bits for mask 0xCC (1 hop)
+    bit<320> data;
 }
 
 
