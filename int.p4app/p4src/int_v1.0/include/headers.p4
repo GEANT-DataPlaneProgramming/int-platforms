@@ -229,14 +229,14 @@ struct metadata {
     #endif
 }
 
-//header int_data_t {
+header int_data_t {
     // varbit data; 
     // change this depending on the INT data embedded  
     // currently this is only needed for the last switch to extract necessary int metadata
     // Damu: Value to check
     // bits for mask 0xCC (1 hop)
-//    bit<32> data;
-//}
+    bit<416> data;
+}
 
 
 
@@ -267,7 +267,7 @@ struct headers {
     int_q_occupancy_t           int_q_occupancy;
     int_switch_id_t                int_switch_id;
     // INT metadata of previous nodes
-    //int_data_t int_data;
+    int_data_t int_data;
 }
 
 

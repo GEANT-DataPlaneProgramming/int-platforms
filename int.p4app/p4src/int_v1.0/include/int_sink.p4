@@ -80,7 +80,9 @@ control remove_sink_headerT(inout headers hdr){
         hdr.ipv4.dscp = hdr.int_shim.dscp;
         // Constant
         // len_bytes = 4
-        bit<16> len_bytes = INT_SHIM_HEADER_LEN_BYTES;
+        // and overall previous INT header
+        // to compute according to number of hops
+        bit<16> len_bytes = INT_SHIM_HEADER_LEN_BYTES + 90;
 
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
         if (hdr.udp.isValid()) {
@@ -100,7 +102,7 @@ control remove_sink_headerT(inout headers hdr){
         // remove int data
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
-	//hdr.int_data.setInvalid();
+        hdr.int_data.setInvalid();
 
     }
 
@@ -178,8 +180,8 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             // remove INT headers from a frame
             remove_sink_headerT.apply(hdr);
         }
-        if (meta.int_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){
-        /*if (meta.mirror_md.mirror_type == 1){*/
+        /*if (meta.int_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){*/
+        if (meta.mirror_md.isValid()){
             Int_report.apply(hdr, meta, standard_metadata, imp);
       
         }

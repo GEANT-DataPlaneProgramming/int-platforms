@@ -355,13 +355,13 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         pkt.extract(hdr.int_header);
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
         /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
-        //transition parse_int_data;
-         transition accept;
+        transition parse_int_data;
+         /*transition accept;*/
     }
-    //state parse_int_data {
-    //    pkt.extract(hdr.int_data);
-    //    transition accept;
-    // }
+    state parse_int_data {
+        pkt.extract(hdr.int_data);
+        transition accept;
+     }
 
 }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
