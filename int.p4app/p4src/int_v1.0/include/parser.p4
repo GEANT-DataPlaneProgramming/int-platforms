@@ -369,6 +369,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
 control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
     Checksum() ipv4_csum;
+    Mirror() mirror;
     apply {
         // Updating and checking of the checksum is done in the deparser.
         // Checksumming units are only available in the parser sections of
@@ -392,6 +393,11 @@ control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, 
             );
         }
         
+        // Send the mirror of hdr to collector
+        if (meta.int_metadata.mirror_type == 1) {
+            mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.int_metadata.mirror_type});
+        }
+
         // bridge header
         packet.emit(meta.int_metadata);
         
@@ -428,7 +434,6 @@ control EgressDeparser(packet_out packet,
                                     in    egress_intrinsic_metadata_for_deparser_t  eg_dprsr_md) {
     
     Checksum() ipv4_csum;
-    Mirror() mirror;
     apply {
         // Updating and checking of the checksum is done in the deparser.
         // Checksumming units are only available in the parser sections of
@@ -471,11 +476,7 @@ control EgressDeparser(packet_out packet,
             );
         }
         
-        // Send the mirror of hdr to collector
-        if (meta.int_metadata.mirror_type == 1) {
-            mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.int_metadata.mirror_type});
-        }
-        
+                
         // report headers
         packet.emit(hdr.report_ethernet);
         packet.emit(hdr.report_ipv4);

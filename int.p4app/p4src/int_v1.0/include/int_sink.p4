@@ -179,6 +179,7 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             remove_sink_headerT.apply(hdr);
         }
         if (meta.int_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){
+        /*if (meta.mirror_md.mirror_type == 1){*/
             Int_report.apply(hdr, meta, standard_metadata, imp);
       
         }
