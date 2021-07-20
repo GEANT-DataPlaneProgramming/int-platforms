@@ -116,7 +116,8 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.report_fixed_header.len = INT_REPORT_HEADER_LEN_WORDS;
 
             hdr.report_fixed_header.nprot = 0; // 0 for Ethernet
-            hdr.report_fixed_header.rep_md_bits = 0;
+            hdr.report_fixed_header.rep_md_bits_high = 0;
+            hdr.report_fixed_header.rep_md_bits_low = 0;
             hdr.report_fixed_header.reserved = 0;
             hdr.report_fixed_header.d = 0;
             hdr.report_fixed_header.q = 0;

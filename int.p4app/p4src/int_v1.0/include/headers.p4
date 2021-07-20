@@ -21,8 +21,6 @@
 #ifndef _HEADERS_P4_
 #define _HEADERS_P4_
 
-
-
 #define PKT_INSTANCE_TYPE_NORMAL 0
 #define PKT_INSTANCE_TYPE_INGRESS_CLONE 1
 #define PKT_INSTANCE_TYPE_EGRESS_CLONE 2
@@ -30,7 +28,6 @@
 #define PKT_INSTANCE_TYPE_INGRESS_RECIRC 4
 #define PKT_INSTANCE_TYPE_REPLICATION 5
 #define PKT_INSTANCE_TYPE_RESUBMIT 6
-
 
 header ethernet_t {
     bit<48> dstAddr;
@@ -74,7 +71,7 @@ header tcp_t {
     bit<16> urgPoint;
 }
 
-const bit<6> IPv4_DSCP_INT = 0x20;   // indicates that INT header in the packet
+const bit<6> IPv4_DSCP_INT = 0x20;   // indicates an INT header in the packet
 const bit<16> INT_SHIM_HEADER_LEN_BYTES = 4;
 const bit<8> INT_TYPE_HOP_BY_HOP = 1;
 
@@ -99,7 +96,7 @@ header int_header_t {
     bit<3>  rsvd2;
     bit<5>  hop_metadata_len;   // the length of the metadata added by a single INT node (4-byte words)
     bit<8>  remaining_hop_cnt;  // how many switches can still add INT metadata
-    bit<16>  instruction_mask;   
+    bit<16> instruction_mask;   
     bit<16> rsvd3;
 }
 
@@ -144,12 +141,12 @@ header int_egress_port_tx_util_t {
 const bit<4> INT_REPORT_HEADER_LEN_WORDS = 4;
 const bit<4> INT_REPORT_VERSION = 1;
 
-#ifdef BMV2
 header int_report_fixed_header_t {
     bit<4> ver;
     bit<4> len;
     bit<3> nprot;
-    bit<6> rep_md_bits;
+    bit<5> rep_md_bits_high; // Split rep_md_bits to align to word boundaries
+    bit<1> rep_md_bits_low;
     bit<6> reserved;
     bit<1> d;
     bit<1> q;
@@ -159,32 +156,15 @@ header int_report_fixed_header_t {
     bit<32> seq_num;
     bit<32> ingress_tstamp;
 }
-#elif TOFINO
-// The header should be byte-aligned
-header int_report_fixed_header_t {
-    bit<4> ver;
-    bit<4> len;
-    bit<4> nprot;
-    bit<8> rep_md_bits;
-    bit<8> reserved;
-    bit<4> d;
-    bit<4> q;
-    bit<4> f;
-    bit<8> hw_id;
-    bit<32> switch_id;
-    bit<32> seq_num;
-    bit<32> ingress_tstamp;
-}
-#endif
 
 #ifdef BMV2
 struct int_metadata_t {
     bit<1>  source;    // is INT source functionality enabled
     bit<1>  sink;        // is INT sink functionality enabled
     bit<32> switch_id;  // INT switch id is configured by network controller
-    bit<16>  insert_byte_cnt;  // counter of inserted INT bytes
-    bit<8> int_hdr_word_len;  // counter of inserted INT words
-    bit<1> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet 
+    bit<16> insert_byte_cnt;  // counter of inserted INT bytes
+    bit<8>  int_hdr_word_len;  // counter of inserted INT words
+    bit<1>  remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet 
     bit<16> sink_reporting_port;    // on which port INT reports must be send to INT collector
     bit<64> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
     bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline 
@@ -192,23 +172,24 @@ struct int_metadata_t {
 #elif TOFINO
 // in the header of tofino, the metadata should be a multiple of 8 bits.
 header int_metadata_t {
-    bit<8>  source;    // is INT source functionality enabled
-    bit<8>  sink;        // is INT sink functionality enabled
+    bit<4>  source;    // is INT source functionality enabled
+    bit<4>  sink;        // is INT sink functionality enabled
     bit<32> switch_id;  // INT switch id is configured by network controller
-    bit<16>  insert_byte_cnt;  // counter of inserted INT bytes
-    bit<8> int_hdr_word_len;  // counter of inserted INT words
-    bit<8> remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet
+    bit<16> insert_byte_cnt;  // counter of inserted INT bytes
+    bit<8>  int_hdr_word_len;  // counter of inserted INT words
+    bit<8>  remove_int;           // indicator that all INT headers and data must be removed at egress for the processed packet
     bit<16> sink_reporting_port;    // on which port INT reports must be send to INT collector
     bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
     bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline
-    bit<8> instance_type;
+    bit<8>  instance_type;
     @flexible MirrorId_t session_ID;
-    bit<8> mirror_type;
+    bit<8>  mirror_type;
 }
 header mirror_h{
     bit<8> mirror_type;
 }
 #endif
+
 struct layer34_metadata_t {
     bit<32> ip_src;
     bit<32> ip_dst;
@@ -221,12 +202,12 @@ struct layer34_metadata_t {
 }
 
 struct metadata {
-    int_metadata_t  int_metadata;
-    intl4_shim_t          int_shim;
+    int_metadata_t       int_metadata;
+    intl4_shim_t         int_shim;
     layer34_metadata_t   layer34_metadata;
-    #ifdef TOFINO
+#ifdef TOFINO
     mirror_h mirror_md;
-    #endif
+#endif
 }
 
 header int_data_t {
@@ -242,9 +223,9 @@ header int_data_t {
 struct headers {
     // INT report headers
     ethernet_t                report_ethernet;
-    ipv4_t                      report_ipv4;
-    udp_t                       report_udp;
-    int_report_fixed_header_t       report_fixed_header;
+    ipv4_t                    report_ipv4;
+    udp_t                     report_udp;
+    int_report_fixed_header_t report_fixed_header;
     
     // normal headers
     ethernet_t                ethernet;
@@ -253,18 +234,19 @@ struct headers {
     udp_t                     udp;
 
     // INT headers
-    intl4_shim_t          int_shim;
-    int_header_t         int_header;
+    intl4_shim_t              int_shim;
+    int_header_t              int_header;
   
     // local INT node metadata
-    int_egress_port_tx_util_t  int_egress_port_tx_util;
-    int_egress_tstamp_t         int_egress_tstamp;
-    int_hop_latency_t             int_hop_latency;
-    int_ingress_tstamp_t        int_ingress_tstamp;
-    int_port_ids_t                  int_port_ids; 
-    int_level2_port_ids_t        int_level2_port_ids;
-    int_q_occupancy_t           int_q_occupancy;
-    int_switch_id_t                int_switch_id;
+    int_egress_port_tx_util_t int_egress_port_tx_util;
+    int_egress_tstamp_t       int_egress_tstamp;
+    int_hop_latency_t         int_hop_latency;
+    int_ingress_tstamp_t      int_ingress_tstamp;
+    int_port_ids_t            int_port_ids;
+    int_level2_port_ids_t     int_level2_port_ids;
+    int_q_occupancy_t         int_q_occupancy;
+    int_switch_id_t           int_switch_id;
+
     // INT metadata of previous nodes
     int_data_t int_data;
 }
