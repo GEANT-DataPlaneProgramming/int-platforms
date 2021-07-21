@@ -37,13 +37,9 @@ RegisterAction<data_t, data_t, data_t>(report_seq_num_register)
 #endif
 
 #ifdef BMV2
-
-control Int_report(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-
+    control Int_report(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 #elif TOFINO
-
     control Int_report(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
-
 #endif
 
         bit<32> seq_num_value = 0;
@@ -66,14 +62,11 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.report_ipv4.dscp = 0;
             hdr.report_ipv4.ecn = 0;
 
-            // DAMU: too complex computation for Tofino
-            // We need to optimize the code 
-            #ifdef BMV2
-            
-            // 2x ipv4 header + udp header + eth header + report header + int data len
+            // 2x ipv4 header (20*2) + udp header (8) + eth header (14) + report header (16) + int data len
+#ifdef BMV2
             hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14)
                 + ((bit<16>)(INT_REPORT_HEADER_LEN_WORDS)<<2)
-                + (((bit<16>)hdr.int_shim.len) << 2 );
+                + (((bit<16>)hdr.int_shim.len) << 2);
                 
             // add size of original tcp/udp header
             if (hdr.tcp.isValid()) {
@@ -83,13 +76,14 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             } else {
                 hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
             }
-            #elif TOFINO
-            hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14)
-                + ((bit<16>)(INT_REPORT_HEADER_LEN_WORDS)<<2)
-                + (INT_SHIM_HEADER_LEN_BYTES << 2 );
-            // Damu: I think we currently only consider udp?
-            hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
-            #endif
+#elif TOFINO
+            hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14 + 16)
+                // + (((bit<16>)hdr.int_shim.len) << 2);
+				+ 92; //TODO@FEDE: hardcoded value
+            // if (hdr.udp.isValid()) {
+                hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
+			// }
+#endif
             hdr.report_ipv4.id = 0;
             hdr.report_ipv4.flags = 0;
             hdr.report_ipv4.fragOffset = 0;
@@ -102,11 +96,6 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             hdr.report_udp.setValid();
             hdr.report_udp.srcPort = 0;
             hdr.report_udp.dstPort = collector_port;
-            // Damu: I do not understand why it is commented by Damian's side
-            // ipv4 header + 2x udp header + eth header + report header + int data len
-            // hdr.report_udp.len = (bit<16>)(20 + 8 + 8 + 14)
-            //                       + (bit<16>)REPORT_FIXED_HEADER_LEN
-            //                       + (((bit<16>)hdr.int_shim.len) << 2 );
             hdr.report_udp.len = hdr.report_ipv4.totalLen - 20;
 
             // INT report fixed header ************************************************/
@@ -126,34 +115,31 @@ control Int_report(inout headers hdr, inout metadata meta, inout standard_metada
             // hw_id - specific to the switch, e.g. id of linecard
             hdr.report_fixed_header.hw_id = 0;
             hdr.report_fixed_header.switch_id = meta.int_metadata.switch_id;
-            #ifdef BMV2
+#ifdef BMV2
             report_seq_num_register.read(seq_num_value, 0);
             hdr.report_fixed_header.seq_num = seq_num_value;
             report_seq_num_register.write(0, seq_num_value + 1);
 
             hdr.report_fixed_header.ingress_tstamp = (bit<32>)standard_metadata.ingress_global_timestamp;
-            #elif TOFINO
+#elif TOFINO
             hdr.report_fixed_header.seq_num = update_report_seq_num.execute(0); 
 
             hdr.report_fixed_header.ingress_tstamp = (bit<32>)imp.global_tstamp;
-            #endif
+#endif
 
             // Original packet headers, INT shim and INT data come after report header.
             // drop all data besides int report and report eth header
-            #ifdef BMV2
+#ifdef BMV2
             truncate((bit<32>)hdr.report_ipv4.totalLen + 14);
-            #elif TOFINO
-            // TODO
-
-            #endif
+#elif TOFINO
+            // Not supported
+#endif
             }
             table tb_int_reporting {
                 actions = {
                     send_report;
                 }
-                #if TOFINO
                 size = 512;
-                #endif
             }
 
         apply {

@@ -25,19 +25,14 @@ error
 }
 
 #ifdef BMV2
- 
 parser ParserImpl(packet_in packet, out headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-
-#elif TOFINO
-
-parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out ingress_intrinsic_metadata_t standard_metadata) {
-
-    Checksum() ipv4_checksum;
-    
-#endif
-
     state start {
-        #ifdef TOFINO
+       transition parse_ethernet;
+    }
+#elif TOFINO
+parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out ingress_intrinsic_metadata_t standard_metadata) {
+    Checksum() ipv4_checksum;
+    state start {
         packet.extract(standard_metadata);
         packet.advance(PORT_METADATA_SIZE);
         meta.int_metadata.source = 0;
@@ -61,9 +56,10 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.layer34_metadata.l4_proto = 0;
         meta.layer34_metadata.l3_mtu = 0;
         meta.layer34_metadata.dscp = 0;
-        #endif
        transition parse_ethernet;
     }
+#endif
+
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
@@ -124,7 +120,6 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
 }
 
 #ifdef BMV2
-
 control DeparserImpl(packet_out packet, in headers hdr) {
     apply {
         // raport headers
@@ -295,9 +290,11 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             pkt.extract(meta.int_metadata);
             transition parse_ethernet;
     }
-   state parse_mirror{
+
+    state parse_mirror{
             pkt.extract(meta.mirror_md);
             transition parse_ethernet;
+            // transition parse_bridge; //FEDE: still need to parse bridge, no?
     }
 
     state parse_ethernet {
@@ -314,12 +311,12 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         meta.layer34_metadata.ip_ver = 8w4;
         meta.layer34_metadata.dscp = hdr.ipv4.dscp;
 
-        #ifdef TOFINO
+#ifdef TOFINO
         ipv4_checksum.add(hdr.ipv4);
         /*// Output of verify is 0 or 1*/
         /*// If it is 1, there is checksum error*/
         ipv4_checksum.verify();
-        #endif
+#endif
         transition select(hdr.ipv4.protocol) {
             8w0x11: parse_udp;
             8w0x6: parse_tcp;
@@ -349,6 +346,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
     state parse_int_shim {
         pkt.extract(hdr.int_shim);
         /*verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);*/
+		// meta.int_len_bytes = (bit<16>) hdr.int_shim.len;
         transition parse_int_header;
     }
     state parse_int_header {
@@ -356,16 +354,20 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
         /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
         transition parse_int_data;
-         /*transition accept;*/
     }
     state parse_int_data {
-        pkt.extract(hdr.int_data);
+        // pkt.extract(hdr.int_data, ((bit<32>) (hdr.int_shim.len - 3)) << 5); //2 words-> bytes, 3 bytes -> bits
+        // pkt.extract(hdr.int_data, (meta.int_len_bytes << 3));
+        pkt.extract(hdr.int_data, 320); //40 bytes  //TODO@FEDE: hardcoded value
         transition accept;
-     }
+    }
 }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
 
-control IngressDeparser(packet_out packet, inout headers hdr, in metadata meta, in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
+control IngressDeparser(packet_out packet,
+    inout headers hdr,
+    in metadata meta,
+    in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) {
 
     Checksum() ipv4_csum;
     Mirror() mirror;
@@ -491,7 +493,7 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
         
-        // local INT node metadata
+        // local INT node data
         packet.emit(hdr.int_switch_id);
         packet.emit(hdr.int_port_ids);
         packet.emit(hdr.int_hop_latency);
@@ -500,6 +502,8 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
+
+        // Previous notes INT data
         packet.emit(hdr.int_data);
 	}
     }

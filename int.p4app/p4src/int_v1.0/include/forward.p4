@@ -18,25 +18,20 @@
  * limitations under the License.
  */
  
- #ifdef BMV2
- 
+#ifdef BMV2
 control Forward(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-
 #elif TOFINO
-
 control Forward(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
-
 #endif
 
     action send_to_cpu(bit<9> port) {
- #ifdef BMV2
+#ifdef BMV2
         standard_metadata.egress_spec = port;
 #elif TOFINO
         standard_metadata.ucast_egress_port = port; 
 #endif
     }
     action send_to_port(bit<9> port) {
-        //standard_metadata.egress_port = port;
 #ifdef BMV2
         standard_metadata.egress_spec = port;
 #elif TOFINO

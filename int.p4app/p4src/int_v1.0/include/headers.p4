@@ -206,17 +206,12 @@ struct metadata {
     intl4_shim_t         int_shim;
     layer34_metadata_t   layer34_metadata;
 #ifdef TOFINO
-    mirror_h mirror_md;
+    mirror_h             mirror_md;
 #endif
 }
 
 header int_data_t {
-    // varbit data; 
-    // change this depending on the INT data embedded  
-    // currently this is only needed for the last switch to extract necessary int metadata
-    // Damu: Value to check
-    // 320 bits for mask 0xCC (1 hop)
-    bit<320> data;
+    varbit<2000> data;
 }
 
 
@@ -248,7 +243,7 @@ struct headers {
     int_switch_id_t           int_switch_id;
 
     // INT metadata of previous nodes
-    int_data_t int_data;
+    int_data_t                int_data;
 }
 
 

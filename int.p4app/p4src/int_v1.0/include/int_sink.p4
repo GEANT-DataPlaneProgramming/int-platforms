@@ -20,46 +20,37 @@
 
 #include "int_report.p4"
 
-const bit<48> COLLECTOR_MAC = 0xf661c06a1421; 
-const bit<32> COLLECTOR_IP = 0x0a0000fe;
-const bit<48> DP_MAC =  0xf661c06a0001;
 const bit<32> INT_REPORT_MIRROR_SESSION_ID = 1;   // mirror session specyfing egress_port for cloned INT report packets, defined by switch CLI command   
 
 #ifdef BMV2
-
 control Int_sink_config(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-
 #elif TOFINO
-
 control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_intrinsic_metadata_for_tm_t standard_metadata) {
-
 #endif
-    
     action configure_sink(bit<16> sink_reporting_port) {
         meta.int_metadata.remove_int = 1;   // indicate that INT headers must be removed in egress
         meta.int_metadata.sink_reporting_port = (bit<16>)sink_reporting_port; 
-        #ifdef BMV2
+#ifdef BMV2
         clone3<metadata>(CloneType.I2E, INT_REPORT_MIRROR_SESSION_ID, meta);
-        #elif TOFINO
-
+#elif TOFINO
         meta.int_metadata.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
         // To use mirror
         meta.int_metadata.mirror_type = 1;
         meta.int_metadata.session_ID = (bit<10>)INT_REPORT_MIRROR_SESSION_ID;
-        #endif
+#endif
     }
-    
-   //table used to activate INT sink for particular egress port of the switch
+
+    //table used to activate INT sink for particular egress port of the switch
     table tb_int_sink {
         actions = {
             configure_sink;
         }
         key = {
-            #ifdef BMV2
+#ifdef BMV2
             standard_metadata.egress_spec: exact;
-            #elif TOFINO
+#elif TOFINO
             standard_metadata.ucast_egress_port: exact;
-            #endif
+#endif
         }
         size = 255;
     }
@@ -73,60 +64,23 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
     }
 }
 
-#ifdef TOFINO
-control remove_sink_headerT(inout headers hdr){
-    apply{
-         // restore original headers
-        hdr.ipv4.dscp = hdr.int_shim.dscp;
-        // Constant
-        // len_bytes = 4
-        // and overall previous INT header
-        // to compute according to number of hops
-        bit<16> len_bytes = INT_SHIM_HEADER_LEN_BYTES + 90;
-
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
-        if (hdr.udp.isValid()) {
-            hdr.udp.len = hdr.udp.len - len_bytes;
-        }
-
-        // remove INT data added in INT sink
-        hdr.int_switch_id.setInvalid();
-        hdr.int_port_ids.setInvalid();
-        hdr.int_ingress_tstamp.setInvalid();
-        hdr.int_egress_tstamp.setInvalid();
-        hdr.int_hop_latency.setInvalid();
-        hdr.int_level2_port_ids.setInvalid();
-        hdr.int_q_occupancy.setInvalid();
-        hdr.int_egress_port_tx_util.setInvalid();
-        
-        // remove int data
-        hdr.int_shim.setInvalid();
-        hdr.int_header.setInvalid();
-        hdr.int_data.setInvalid();
-
-    }
-
-}
+#ifdef BMV2
+control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
+#elif TOFINO
+control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
 #endif
 
 #ifdef BMV2
-
-control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-
-#elif TOFINO
-
-control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
-
-#endif
-    
     action remove_sink_header() {
          // restore original headers
         hdr.ipv4.dscp = hdr.int_shim.dscp;
+// #ifdef BMV2
         bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
         if (hdr.udp.isValid()) {
             hdr.udp.len = hdr.udp.len - len_bytes;
         }
+// #endif
 
         // remove INT data added in INT sink
         hdr.int_switch_id.setInvalid();
@@ -141,31 +95,51 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
         // remove int data
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
+// #ifdef TOFINO
+        // hdr.int_data.setInvalid();
+// #endif
     }
-    
-    /*
-    action send_report(bit<48> dp_mac, bit<48> collector_mac, bit<32> collector_ip)
-    {
-        // frame to INT collector requires proper MAC and IP addresses
-        hdr.ethernet.srcAddr = dp_mac;
-        hdr.ethernet.dstAddr = collector_mac;
-        hdr.ipv4.dstAddr = collector_ip;
+#endif
+
+#ifdef TOFINO
+    action restore_header_values() {
+        // restore original headers
+        hdr.ipv4.dscp = hdr.int_shim.dscp;
+
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 92; //TODO@FEDE: hardcoded value
+		hdr.udp.len = hdr.udp.len - 92; //TODO@FEDE: hardcoded value
+
+        // bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;
+        // hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
+        // if (hdr.udp.isValid()) {
+            // hdr.udp.len = hdr.udp.len - len_bytes;
+        // }
     }
-    
-    table tb_int_reporting {
-        actions = {
-            send_report;
-        }
+
+    action remove_int() {
+        // remove INT data added in INT sink
+        hdr.int_switch_id.setInvalid();
+        hdr.int_port_ids.setInvalid();
+        hdr.int_ingress_tstamp.setInvalid();
+        hdr.int_egress_tstamp.setInvalid();
+        hdr.int_hop_latency.setInvalid();
+        hdr.int_level2_port_ids.setInvalid();
+        hdr.int_q_occupancy.setInvalid();
+        hdr.int_egress_port_tx_util.setInvalid();
+
+        // remove int data
+        hdr.int_shim.setInvalid();
+        hdr.int_header.setInvalid();
+        hdr.int_data.setInvalid();
     }
-    */
-    
+#endif
+
     apply {
-    
         // INT sink must process only INT packets
         if (!hdr.int_header.isValid())
             return;
-        
-        #ifdef BMV2
+
+#ifdef BMV2
         // @Damian: I think standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL  is not required 
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL && meta.int_metadata.remove_int == 1) {
             // remove INT headers from a frame
@@ -175,19 +149,18 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             // prepare an INT report for the INT collector
             Int_report.apply(hdr, meta, standard_metadata);
         }
-        #elif TOFINO
-        if (meta.int_metadata.remove_int == 1) {
+#elif TOFINO
+        // if (meta.int_metadata.remove_int == 1) {
+        if (meta.int_metadata.remove_int == 1 && !meta.mirror_md.isValid()) {
             // remove INT headers from a frame
-            remove_sink_headerT.apply(hdr);
+            remove_int();
+			restore_header_values();
         }
         /*if (meta.int_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){*/
         if (meta.mirror_md.isValid()){
             Int_report.apply(hdr, meta, standard_metadata, imp);
-      
         }
-
-
-        #endif
+#endif
 
     }
 }
