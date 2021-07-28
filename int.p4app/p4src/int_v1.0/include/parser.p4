@@ -92,7 +92,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.layer34_metadata.l4_dst = hdr.tcp.dstPort;
         meta.layer34_metadata.l4_proto = 8w0x6;
         transition select(meta.layer34_metadata.dscp) {
-            IPv4_DSCP_INT: parse_int_shim;
+            IPv4_DSCP_INT: parse_int;
             default: accept;
         }
     }
@@ -102,16 +102,13 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.layer34_metadata.l4_dst = hdr.udp.dstPort;
         meta.layer34_metadata.l4_proto = 8w0x11;
         transition select(meta.layer34_metadata.dscp, hdr.udp.dstPort) {
-            (6w0x20 &&& 6w0x3f, 16w0x0 &&& 16w0x0): parse_int_shim;
+            (6w0x20 &&& 6w0x3f, 16w0x0 &&& 16w0x0): parse_int;
             default: accept;
         }
     }
-    state parse_int_shim {
+    state parse_int {
         packet.extract(hdr.int_shim);
         /*verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);*/
-        transition parse_int_header;
-    }
-    state parse_int_header {
         packet.extract(hdr.int_header);
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
         /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
@@ -294,7 +291,6 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
     state parse_mirror{
             pkt.extract(meta.mirror_md);
             transition parse_ethernet;
-            // transition parse_bridge; //FEDE: still need to parse bridge, no?
     }
 
     state parse_ethernet {
@@ -329,7 +325,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         meta.layer34_metadata.l4_dst = hdr.tcp.dstPort;
         meta.layer34_metadata.l4_proto = 8w0x6;
         transition select(meta.layer34_metadata.dscp) {
-            IPv4_DSCP_INT: parse_int_shim;
+            IPv4_DSCP_INT: parse_int;
             default: accept;
         }
     }
@@ -339,27 +335,54 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         meta.layer34_metadata.l4_dst = hdr.udp.dstPort;
         meta.layer34_metadata.l4_proto = 8w0x11;
         transition select(meta.layer34_metadata.dscp, hdr.udp.dstPort) {
-            (6w0x20 &&& 6w0x3f, 16w0x0 &&& 16w0x0): parse_int_shim;
+            (6w0x20 &&& 6w0x3f, 16w0x0 &&& 16w0x0): parse_int;
             default: accept;
         }
     }
-    state parse_int_shim {
+    state parse_int {
         pkt.extract(hdr.int_shim);
-        /*verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);*/
-        // meta.int_len_bytes = (bit<16>) hdr.int_shim.len;
-        transition parse_int_header;
-    }
-    state parse_int_header {
         pkt.extract(hdr.int_header);
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
         /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
-        transition parse_int_data;
+        transition select(hdr.int_shim.len) {
+            // words, -3 to account for the above headers
+            // For instr 0xCC
+            (8w0x0d): parse_int_data_320; //13
+            (8w0x17): parse_int_data_640; //23
+            (8w0x3f): parse_int_data_960; //33
+            (8w0x2b): parse_int_data_1280; //43
+            (8w0x35): parse_int_data_1600; //53
+            //TODO: for other instruction masks
+            default: accept;
+        }
     }
-    state parse_int_data {
-        //pkt.extract(hdr.int_data, ((bit<32>) (hdr.int_shim.len - 3)) << 5); //2 words-> bytes, 3 bytes -> bits
-        pkt.extract(hdr.int_data, 320); //40 bytes  //TODO@FEDE: hardcoded value
+    // Manualle generated data parsing states
+    state parse_int_data_320 {
+        pkt.extract(hdr.int_data, 320);
         transition accept;
     }
+    state parse_int_data_640 {
+        pkt.extract(hdr.int_data, 640);
+        transition accept;
+    }
+    state parse_int_data_960 {
+        pkt.extract(hdr.int_data, 960);
+        transition accept;
+    }
+    state parse_int_data_1280 {
+        pkt.extract(hdr.int_data, 1280);
+        transition accept;
+    }
+    state parse_int_data_1600 {
+        pkt.extract(hdr.int_data, 1600);
+        transition accept;
+    }
+/*    state parse_int_data {
+        //pkt.extract(hdr.int_data, ((bit<32>) (hdr.int_shim.len - 3)) << 5); //2 words-> bytes, 3 bytes -> bits
+        // This generates a bunch of warnings but compiles - realistic values will work
+        pkt.extract(hdr.int_data, (bit<32>) ((hdr.int_shim.len - 3) << 5));
+        transition accept;
+    } */
 }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
 
