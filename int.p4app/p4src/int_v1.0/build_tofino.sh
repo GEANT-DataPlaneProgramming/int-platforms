@@ -1,14 +1,18 @@
+set -e
+
 echo "* Preparing build directory..."
-mkdir -p $SDE/build/customer/int
+target_dir=$SDE/build/customer/int
+mkdir -p $target_dir
 curr_dir=$(pwd)
 
+echo
 echo "* Configuring build..."
-cd $SDE/build/customer/int
+cd $target_dir
 $SDE/pkgsrc/p4-build/configure \
-P4PPFLAGS="-I$SDE/install/share/p4c/p4include/" \
 P4_VERSION=p4-16 \
 P4_ARCHITECTURE=tna \
 P4FLAGS="--verbose 2 --create-graphs -g" \
+P4PPFLAGS="-DTOFINO" \
 P4JOBS=4 \
 P4_PATH=~/src/In_band_telemetry_bmv2/int.p4app/p4src/int_v1.0/int.p4 \
 P4_NAME=int \
@@ -16,9 +20,15 @@ enable_thrift=yes \
 --with-tofino \
 --prefix=$SDE_INSTALL
 
+echo
+echo "* Cleaning up..."
+make clean
+
+echo
 echo "* Compiling program..."
 make
 
+echo
 echo "* Installing program..."
 make install
 

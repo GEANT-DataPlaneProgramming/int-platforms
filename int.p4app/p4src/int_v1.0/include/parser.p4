@@ -346,7 +346,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
     state parse_int_shim {
         pkt.extract(hdr.int_shim);
         /*verify(hdr.int_shim.len >= 3, error.INTShimLenTooShort);*/
-		// meta.int_len_bytes = (bit<16>) hdr.int_shim.len;
+        // meta.int_len_bytes = (bit<16>) hdr.int_shim.len;
         transition parse_int_header;
     }
     state parse_int_header {
@@ -356,8 +356,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
         transition parse_int_data;
     }
     state parse_int_data {
-        // pkt.extract(hdr.int_data, ((bit<32>) (hdr.int_shim.len - 3)) << 5); //2 words-> bytes, 3 bytes -> bits
-        // pkt.extract(hdr.int_data, (meta.int_len_bytes << 3));
+        //pkt.extract(hdr.int_data, ((bit<32>) (hdr.int_shim.len - 3)) << 5); //2 words-> bytes, 3 bytes -> bits
         pkt.extract(hdr.int_data, 320); //40 bytes  //TODO@FEDE: hardcoded value
         transition accept;
     }

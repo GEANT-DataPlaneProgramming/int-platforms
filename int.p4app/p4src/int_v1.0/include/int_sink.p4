@@ -109,8 +109,8 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - 92; //TODO@FEDE: hardcoded value
 		hdr.udp.len = hdr.udp.len - 92; //TODO@FEDE: hardcoded value
 
-        // bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;
-        // hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
+        bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;
+        //hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
         // if (hdr.udp.isValid()) {
             // hdr.udp.len = hdr.udp.len - len_bytes;
         // }
@@ -140,7 +140,6 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             return;
 
 #ifdef BMV2
-        // @Damian: I think standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL  is not required 
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_NORMAL && meta.int_metadata.remove_int == 1) {
             // remove INT headers from a frame
             remove_sink_header();
@@ -156,8 +155,8 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             remove_int();
 			restore_header_values();
         }
-        /*if (meta.int_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE){*/
         if (meta.mirror_md.isValid()){
+            // cloned packet, make it into report for the INT collector
             Int_report.apply(hdr, meta, standard_metadata, imp);
         }
 #endif
