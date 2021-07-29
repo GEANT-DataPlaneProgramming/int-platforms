@@ -14,7 +14,7 @@ P4_ARCHITECTURE=tna \
 P4FLAGS="--verbose 2 --create-graphs -g" \
 P4PPFLAGS="-DTOFINO" \
 P4JOBS=4 \
-P4_PATH=~/src/In_band_telemetry_bmv2/int.p4app/p4src/int_v1.0/int.p4 \
+P4_PATH=$curr_dir/int.p4 \
 P4_NAME=int \
 enable_thrift=yes \
 --with-tofino \

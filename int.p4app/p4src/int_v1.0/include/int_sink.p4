@@ -70,17 +70,21 @@ control Int_sink(inout headers hdr, inout metadata meta, inout standard_metadata
 control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
 #endif
 
-#ifdef BMV2
     action remove_sink_header() {
          // restore original headers
         hdr.ipv4.dscp = hdr.int_shim.dscp;
-// #ifdef BMV2
+#ifdef BMV2
         bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
         if (hdr.udp.isValid()) {
             hdr.udp.len = hdr.udp.len - len_bytes;
         }
-// #endif
+#elif TOFINO
+        // For Tofino we need to pre-compute this in the parser
+        // and skip check header validity to get it to compile
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen - meta.int_len_bytes;
+        hdr.udp.len = hdr.udp.len - meta.int_len_bytes;
+#endif
 
         // remove INT data added in INT sink
         hdr.int_switch_id.setInvalid();
@@ -95,44 +99,10 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
         // remove int data
         hdr.int_shim.setInvalid();
         hdr.int_header.setInvalid();
-// #ifdef TOFINO
-        // hdr.int_data.setInvalid();
-// #endif
-    }
-#endif
-
 #ifdef TOFINO
-    action restore_header_values() {
-        // restore original headers
-        hdr.ipv4.dscp = hdr.int_shim.dscp;
-
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - 92; //TODO@FEDE: hardcoded value
-		hdr.udp.len = hdr.udp.len - 92; //TODO@FEDE: hardcoded value
-
-        bit<16> len_bytes = ((bit<16>)hdr.int_shim.len) << 2;
-        //hdr.ipv4.totalLen = hdr.ipv4.totalLen - len_bytes;
-        // if (hdr.udp.isValid()) {
-            // hdr.udp.len = hdr.udp.len - len_bytes;
-        // }
-    }
-
-    action remove_int() {
-        // remove INT data added in INT sink
-        hdr.int_switch_id.setInvalid();
-        hdr.int_port_ids.setInvalid();
-        hdr.int_ingress_tstamp.setInvalid();
-        hdr.int_egress_tstamp.setInvalid();
-        hdr.int_hop_latency.setInvalid();
-        hdr.int_level2_port_ids.setInvalid();
-        hdr.int_q_occupancy.setInvalid();
-        hdr.int_egress_port_tx_util.setInvalid();
-
-        // remove int data
-        hdr.int_shim.setInvalid();
-        hdr.int_header.setInvalid();
         hdr.int_data.setInvalid();
-    }
 #endif
+    }
 
     apply {
         // INT sink must process only INT packets
@@ -152,8 +122,7 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
         // if (meta.int_metadata.remove_int == 1) {
         if (meta.int_metadata.remove_int == 1 && !meta.mirror_md.isValid()) {
             // remove INT headers from a frame
-            remove_int();
-			restore_header_values();
+            remove_sink_header();
         }
         if (meta.mirror_md.isValid()){
             // cloned packet, make it into report for the INT collector

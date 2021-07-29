@@ -56,7 +56,8 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.layer34_metadata.l4_proto = 0;
         meta.layer34_metadata.l3_mtu = 0;
         meta.layer34_metadata.dscp = 0;
-       transition parse_ethernet;
+        meta.int_len_bytes = 0;
+        transition parse_ethernet;
     }
 #endif
 
@@ -240,40 +241,42 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
 }
 
 #elif TOFINO
-    parser EgressParser(packet_in        pkt,
-        /* User */
-        out headers          hdr,
-        out metadata         meta,
-        /* Intrinsic */
-        out egress_intrinsic_metadata_t  eg_intr_md)
-    {
+parser EgressParser(packet_in        pkt,
+    /* User */
+    out headers          hdr,
+    out metadata         meta,
+    /* Intrinsic */
+    out egress_intrinsic_metadata_t  eg_intr_md)
+{
 
-        Checksum() ipv4_checksum;
-        /* This is a mandatory state, required by Tofino Architecture */
-        state start {
-            pkt.extract(eg_intr_md);
-            meta.int_metadata.source = 0;
-            meta.int_metadata.sink = 0;
-            meta.int_metadata.switch_id = 0;
-            meta.int_metadata.insert_byte_cnt = 0;
-            meta.int_metadata.int_hdr_word_len = 0;
-            meta.int_metadata.remove_int = 0;
-            meta.int_metadata.sink_reporting_port = 0;
-            meta.int_metadata.ingress_tstamp = 0;
-            meta.int_metadata.ingress_port = 0;
-            meta.int_metadata.instance_type = 0;
-            meta.int_metadata.session_ID = 1;
-            meta.int_metadata.mirror_type = 0;
-            meta.layer34_metadata.ip_src = 0;
-            meta.layer34_metadata.ip_dst = 0;
-            meta.layer34_metadata.ip_ver = 0;
-            meta.layer34_metadata.l4_src = 0;
-            meta.layer34_metadata.l4_dst = 0;
-            meta.layer34_metadata.l4_proto = 0;
-            meta.layer34_metadata.l3_mtu = 0;
-            meta.layer34_metadata.dscp = 0;
-            transition parse_metadata;
+    Checksum() ipv4_checksum;
+    /* This is a mandatory state, required by Tofino Architecture */
+    state start {
+        pkt.extract(eg_intr_md);
+        meta.int_metadata.source = 0;
+        meta.int_metadata.sink = 0;
+        meta.int_metadata.switch_id = 0;
+        meta.int_metadata.insert_byte_cnt = 0;
+        meta.int_metadata.int_hdr_word_len = 0;
+        meta.int_metadata.remove_int = 0;
+        meta.int_metadata.sink_reporting_port = 0;
+        meta.int_metadata.ingress_tstamp = 0;
+        meta.int_metadata.ingress_port = 0;
+        meta.int_metadata.instance_type = 0;
+        meta.int_metadata.session_ID = 1;
+        meta.int_metadata.mirror_type = 0;
+        meta.layer34_metadata.ip_src = 0;
+        meta.layer34_metadata.ip_dst = 0;
+        meta.layer34_metadata.ip_ver = 0;
+        meta.layer34_metadata.l4_src = 0;
+        meta.layer34_metadata.l4_dst = 0;
+        meta.layer34_metadata.l4_proto = 0;
+        meta.layer34_metadata.l3_mtu = 0;
+        meta.layer34_metadata.dscp = 0;
+        meta.int_len_bytes = 0;
+        transition parse_metadata;
     }
+
     state parse_metadata{
 	    mirror_h mirror_md= pkt.lookahead<mirror_h>();
 	    transition select(mirror_md.mirror_type) {
@@ -300,6 +303,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             default: accept;
         }
     }
+
     state parse_ipv4 {
         pkt.extract(hdr.ipv4);
         meta.layer34_metadata.ip_src = hdr.ipv4.srcAddr;
@@ -319,6 +323,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             default: accept;
         }
     }
+
     state parse_tcp {
         pkt.extract(hdr.tcp);
         meta.layer34_metadata.l4_src = hdr.tcp.srcPort;
@@ -329,6 +334,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             default: accept;
         }
     }
+
     state parse_udp {
         pkt.extract(hdr.udp);
         meta.layer34_metadata.l4_src = hdr.udp.srcPort;
@@ -339,6 +345,7 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             default: accept;
         }
     }
+
     state parse_int {
         pkt.extract(hdr.int_shim);
         pkt.extract(hdr.int_header);
@@ -351,7 +358,6 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
             (8w0x17): parse_int_data_640; //23
             (8w0x3f): parse_int_data_960; //33
             (8w0x2b): parse_int_data_1280; //43
-            (8w0x35): parse_int_data_1600; //53
             //TODO: for other instruction masks
             default: accept;
         }
@@ -359,22 +365,23 @@ control computeChecksum(inout headers hdr, inout metadata meta) {
     // Manualle generated data parsing states
     state parse_int_data_320 {
         pkt.extract(hdr.int_data, 320);
+        // 13 words + 10 added locally
+        meta.int_len_bytes = 23 << 2;
         transition accept;
     }
     state parse_int_data_640 {
         pkt.extract(hdr.int_data, 640);
+        meta.int_len_bytes = 33 << 2;
         transition accept;
     }
     state parse_int_data_960 {
         pkt.extract(hdr.int_data, 960);
+        meta.int_len_bytes = 43 << 2;
         transition accept;
     }
     state parse_int_data_1280 {
         pkt.extract(hdr.int_data, 1280);
-        transition accept;
-    }
-    state parse_int_data_1600 {
-        pkt.extract(hdr.int_data, 1600);
+        meta.int_len_bytes = 53 << 2;
         transition accept;
     }
 /*    state parse_int_data {

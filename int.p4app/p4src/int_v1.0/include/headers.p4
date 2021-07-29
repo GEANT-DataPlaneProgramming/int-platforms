@@ -206,12 +206,14 @@ struct metadata {
     intl4_shim_t         int_shim;
     layer34_metadata_t   layer34_metadata;
 #ifdef TOFINO
+    bit<16>              int_len_bytes;
     mirror_h             mirror_md;
 #endif
 }
 
 header int_data_t {
-    varbit<2000> data;
+    // Enough room for previous 4 nodes worth of data
+    varbit<1600> data;
 }
 
 
