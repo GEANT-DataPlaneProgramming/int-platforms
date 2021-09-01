@@ -349,11 +349,6 @@ parser EgressParser(packet_in        pkt,
     state parse_int {
         pkt.extract(hdr.int_shim);
         pkt.extract(hdr.int_header);
-
-#ifdef BMV2
-        transition accept;
-    }
-#elif TOFINO
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
         /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
 
@@ -529,7 +524,6 @@ parser EgressParser(packet_in        pkt,
         meta.int_len_bytes = 172;
         transition accept;
     }
-#endif
 }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
 
@@ -672,7 +666,7 @@ control EgressDeparser(packet_out packet,
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
 
-        // Previous notes INT data
+        // Previous nodes INT data
         packet.emit(hdr.int_data);
 	}
     }
