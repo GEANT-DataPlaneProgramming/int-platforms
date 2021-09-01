@@ -349,47 +349,187 @@ parser EgressParser(packet_in        pkt,
     state parse_int {
         pkt.extract(hdr.int_shim);
         pkt.extract(hdr.int_header);
+
+#ifdef BMV2
+        transition accept;
+    }
+#elif TOFINO
         // DAMU: warning (from TOFINO): Parser "verify" is currently unsupported
         /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
+
         transition select(hdr.int_shim.len) {
-            // words, -3 to account for the above headers
-            // For instr 0xCC
-            (8w0x0d): parse_int_data_320; //13
-            (8w0x17): parse_int_data_640; //23
-            (8w0x3f): parse_int_data_960; //33
-            (8w0x2b): parse_int_data_1280; //43
-            //TODO: for other instruction masks
-            default: accept;
+            (8w0x04): parse_int_data_32;
+            (8w0x05): parse_int_data_64;
+            (8w0x06): parse_int_data_96;
+            (8w0x07): parse_int_data_128;
+            (8w0x08): parse_int_data_160;
+            (8w0x09): parse_int_data_192;
+            (8w0x0a): parse_int_data_224;
+            (8w0x0b): parse_int_data_256;
+            (8w0x0c): parse_int_data_288;
+            (8w0x0d): parse_int_data_320;
+            (8w0x0f): parse_int_data_384;
+            (8w0x11): parse_int_data_448;
+            (8w0x12): parse_int_data_480;
+            (8w0x13): parse_int_data_512;
+            (8w0x15): parse_int_data_576;
+            (8w0x17): parse_int_data_640;
+            (8w0x18): parse_int_data_672;
+            (8w0x1b): parse_int_data_768;
+            (8w0x1e): parse_int_data_864;
+            (8w0x1f): parse_int_data_896;
+            (8w0x21): parse_int_data_960;
+            (8w0x23): parse_int_data_1024;
+            (8w0x27): parse_int_data_1152;
+            (8w0x2b): parse_int_data_1280;
+            //default: accept; // Fede: do we even want to accept non-standard sizes
         }
     }
-    // Manualle generated data parsing states
+    // Automatically generated data parsing states
+    state parse_int_data_32 {
+        pkt.extract(hdr.int_data, 32);
+        meta.int_len_bytes = 16;
+        transition accept;
+    }
+
+    state parse_int_data_64 {
+        pkt.extract(hdr.int_data, 64);
+        meta.int_len_bytes = 20;
+        transition accept;
+    }
+
+    state parse_int_data_96 {
+        pkt.extract(hdr.int_data, 96);
+        meta.int_len_bytes = 24;
+        transition accept;
+    }
+
+    state parse_int_data_128 {
+        pkt.extract(hdr.int_data, 128);
+        meta.int_len_bytes = 28;
+        transition accept;
+    }
+
+    state parse_int_data_160 {
+        pkt.extract(hdr.int_data, 160);
+        meta.int_len_bytes = 32;
+        transition accept;
+    }
+
+    state parse_int_data_192 {
+        pkt.extract(hdr.int_data, 192);
+        meta.int_len_bytes = 36;
+        transition accept;
+    }
+
+    state parse_int_data_224 {
+        pkt.extract(hdr.int_data, 224);
+        meta.int_len_bytes = 40;
+        transition accept;
+    }
+
+    state parse_int_data_256 {
+        pkt.extract(hdr.int_data, 256);
+        meta.int_len_bytes = 44;
+        transition accept;
+    }
+
+    state parse_int_data_288 {
+        pkt.extract(hdr.int_data, 288);
+        meta.int_len_bytes = 48;
+        transition accept;
+    }
+
     state parse_int_data_320 {
         pkt.extract(hdr.int_data, 320);
-        // 13 words + 10 added locally
-        meta.int_len_bytes = 23 << 2;
+        meta.int_len_bytes = 52;
         transition accept;
     }
+
+    state parse_int_data_384 {
+        pkt.extract(hdr.int_data, 384);
+        meta.int_len_bytes = 60;
+        transition accept;
+    }
+
+    state parse_int_data_448 {
+        pkt.extract(hdr.int_data, 448);
+        meta.int_len_bytes = 68;
+        transition accept;
+    }
+
+    state parse_int_data_480 {
+        pkt.extract(hdr.int_data, 480);
+        meta.int_len_bytes = 72;
+        transition accept;
+    }
+
+    state parse_int_data_512 {
+        pkt.extract(hdr.int_data, 512);
+        meta.int_len_bytes = 76;
+        transition accept;
+    }
+
+    state parse_int_data_576 {
+        pkt.extract(hdr.int_data, 576);
+        meta.int_len_bytes = 84;
+        transition accept;
+    }
+
     state parse_int_data_640 {
         pkt.extract(hdr.int_data, 640);
-        meta.int_len_bytes = 33 << 2;
+        meta.int_len_bytes = 92;
         transition accept;
     }
+
+    state parse_int_data_672 {
+        pkt.extract(hdr.int_data, 672);
+        meta.int_len_bytes = 96;
+        transition accept;
+    }
+
+    state parse_int_data_768 {
+        pkt.extract(hdr.int_data, 768);
+        meta.int_len_bytes = 108;
+        transition accept;
+    }
+
+    state parse_int_data_864 {
+        pkt.extract(hdr.int_data, 864);
+        meta.int_len_bytes = 120;
+        transition accept;
+    }
+
+    state parse_int_data_896 {
+        pkt.extract(hdr.int_data, 896);
+        meta.int_len_bytes = 124;
+        transition accept;
+    }
+
     state parse_int_data_960 {
         pkt.extract(hdr.int_data, 960);
-        meta.int_len_bytes = 43 << 2;
+        meta.int_len_bytes = 132;
         transition accept;
     }
+
+    state parse_int_data_1024 {
+        pkt.extract(hdr.int_data, 1024);
+        meta.int_len_bytes = 140;
+        transition accept;
+    }
+
+    state parse_int_data_1152 {
+        pkt.extract(hdr.int_data, 1152);
+        meta.int_len_bytes = 156;
+        transition accept;
+    }
+
     state parse_int_data_1280 {
         pkt.extract(hdr.int_data, 1280);
-        meta.int_len_bytes = 53 << 2;
+        meta.int_len_bytes = 172;
         transition accept;
     }
-/*    state parse_int_data {
-        //pkt.extract(hdr.int_data, ((bit<32>) (hdr.int_shim.len - 3)) << 5); //2 words-> bytes, 3 bytes -> bits
-        // This generates a bunch of warnings but compiles - realistic values will work
-        pkt.extract(hdr.int_data, (bit<32>) ((hdr.int_shim.len - 3) << 5));
-        transition accept;
-    } */
+#endif
 }
 /*********************  I N G R E S S   D E P A R S E R  ************************/
 
