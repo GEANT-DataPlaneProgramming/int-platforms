@@ -29,8 +29,8 @@ This repository contains P4 code implementing the INT data plane functionality. 
 In this repository, we are trying maintain compatibility both with bmv2 and Tofino switches. Limitations of both platforms have impact on the P4 INT code.
 
 A few flavors of INT implementation are available:
-- `./int.p4app/int_v0.4.json` - version 0.4 of the INT protocol; currently most tested version of the INT protocol; it is compatible with the INT implementation contained in the ONOS network operating system; INT version 0.4 documentation is not longer available on p4.org
-- `./int.p4app/int_v1.0.json` - version 1.0 of the INT protocol; under development
+- `int-platforms/p4src/int_v0.4/` - version 0.4 of the INT protocol; currently most tested version of the INT protocol; it is compatible with the INT implementation contained in the ONOS network operating system; INT version 0.4 documentation is not longer available on p4.org
+- `int-platforms/p4src/int_v1.0/` - version 1.0 of the INT protocol; under development
 
 Future plans assumes implementation of the INT specification version 2.0.
 
@@ -39,17 +39,17 @@ Note: All INT implementation use 64-bit ingress and egress timestamps (instead o
 INT collector
 ----
 It is simple, pure Python based implemtation of the INT collector suitable for very low packet rate of monitored flows (on our hardware, we can generate no more that 2000 packets per second of total traffic within p4app virtual environment).
-The implementation of the INT collector can be found at the following location: `int.p4app/scripts/int_collector_influx.py`. The INT collector is started automatically by INT p4app.
+The implementation of the INT collector can be found at the following location: `int-platforms/platforms/bmv2-mininet/int.p4app/scripts/int_collector_influx.py`. The INT collector is started automatically by INT p4app.
 
-In order to configure desire InfluxDB destination for INT monitoring data please edit proper p4app manifest file (in example: `./int.p4app/int_v0.4.json`):
+In order to configure desire InfluxDB destination for INT monitoring data please edit proper p4app manifest file (in example: `./int.p4app/int_v1.0.json`):
 
 ```
 {
-	"program": "p4src/int_v0.4/int.p4",
+	"program": "p4src/int_v1.0/int.p4",
 	"language": "p4-16",
 	"targets": {
 		"custom": {
-			"program": "topo.py --int_version=0.4 --influx hs-04.ipa.psnc.pl:8086"
+			"program": "topo.py --int_version=1.0 --influx hs-04.ipa.psnc.pl:8086"
 		}
 	}
 }
@@ -72,9 +72,10 @@ Installation
 2. If you want, put the `p4app` script somewhere in your path. For example:
 
     ```
+    cd int-platforms/platforms/bmv2-mininet/
     cp p4app /usr/local/bin
     ```
-    
+   
 I have already modified the default docker image to **jaxa/p4app-epoch**, so `p4app` script can be used directly without need to build a p4app docker image with all additional libraries (which can be problematic). 
 * GitHub project for compiling modified p4app docker image: https://github.com/jaxa1337/p4app
 * DockerHub image of modified p4app: https://hub.docker.com/repository/docker/jaxa/p4app-epoch
@@ -98,7 +99,7 @@ Our INT p4app package has a directory structure that looks like this:
     |
     |- libraries/   (additional libraries that are installed in p4app after container start)
     |
-    |- p4src/   (P4 INT code for bmv2)
+    |- p4src/   (temporal P4 INT code for bmv2 created when starting p4app  - P4 code is copied from main P4 code location: `int-platforms/p4src`)
     |
     |- utils/   (additional utility scripts allowing to debug bmv2 switch, connect to bmv2 CLI, 
                    open mininet host xterm, INT collector is also placed here)
@@ -153,10 +154,11 @@ In order to read how to configure INT functionality for each switch please read:
 Usage
 -----
 
-In order to run specific version of P4 INT code please use proper manifest file:
+In order to run specific version of P4 INT code please use proper bootstrap script:
 
 ```
-p4app run int.p4app -- manifest int_v1.0.json
+cd int-platforms/platforms/bmv2-mininet/
+bash start_int1.0.sh
 ```
 
 If you run this command, you'll find yourself at a Mininet command prompt. p4app will automatically download a Docker image containing the P4 compiler and tools,
@@ -170,9 +172,10 @@ The resulted logs and pcap files are stored in `/tmp/p4app_logs` within a docker
 To access mininet emulated hosts terminals please use:
 
 ``` 
-    ./utils/xterm_h1.sh
-    ./utils/xterm_h2.sh
-    ./utils/xterm_h3.sh
+    cd int-platforms/platforms/bmv2-mininet/int.p4app/utils/
+    ./xterm_h1.sh
+    ./xterm_h2.sh
+    ./xterm_h3.sh
 ```  
 
 From a mininet host terminal you can run a network traffic source (it is just python scripts) which will generate a flow of packets which will be monitored by INT:
@@ -193,9 +196,10 @@ h1 python /tmp/host/h1_h2_udp_flow.py
 In order to access runtime CLI of each bmv2 switch please use:
 
 ``` 
-    ./utils/switch_cli_1.sh
-    ./utils/switch_cli_2.sh
-    ./utils/switch_cli_3.sh
+    cd int-platforms/platforms/bmv2-mininet/int.p4app/utils/
+    ./switch_cli_1.sh
+    ./switch_cli_2.sh
+    ./switch_cli_3.sh
 ``` 
 
 Documentation of that CLI is available here: https://github.com/p4lang/behavioral-model/blob/main/docs/runtime_CLI.md
@@ -204,10 +208,11 @@ Documentation of that CLI is available here: https://github.com/p4lang/behaviora
 
 You can debug each switch by using the bmv2 P4 debugger:
 
-``` 
-    ./utils/debug_switch1.sh
-    ./utils/debug_switch2.sh
-    ./utils/debug_switch3.sh
+```  
+    cd int-platforms/platforms/bmv2-mininet/int.p4app/utils/
+    ./debug_switch1.sh
+    ./debug_switch2.sh
+    ./debug_switch3.sh
 ```  
 
 See p4dbg commands: https://github.com/p4lang/behavioral-model/blob/main/docs/p4dbg_user_guide.md.
