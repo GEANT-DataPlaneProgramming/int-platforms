@@ -149,6 +149,12 @@ sudo docker network create -d macvlan \
  
  If you want connect more external network please check `p4app` bash script. If you want change to which bmv2 switch external network is connected to please look at `topo.py`.
 
+Be aware that for sending packets with INT to an IP address of external network (outside of the server with p4app) you need to modify dst IP address within packet generator script, e.g.:
+- https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/master/platforms/bmv2-mininet/int.p4app/host/h1_cesnet_udp_flow.py#L26
+
+and configure for bmv2 nodes proper switching of packets towards this IP using configuration instructions:
+- https://github.com/GEANT-DataPlaneProgramming/int-platforms/tree/master/platforms/bmv2-mininet/int.p4app/commands
+
 Configuration
 -----
 
