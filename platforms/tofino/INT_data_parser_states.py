@@ -1,5 +1,7 @@
 from itertools import chain, combinations
 
+num_prev_states = 4
+
 def powerset(iterable):
     "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
     s = list(iterable)
@@ -35,7 +37,7 @@ for cmb in list(powerset(hdr_byte_sizes))[1:]:
 # Up to 4 previous blobs for each size
 state_sizes = set()
 for size in sizes:
-    s = [size*i for i in range(1, 5)]
+    s = [size*i for i in range(1, num_prev_states+1)]
     for e in s:
         state_sizes.add(e)
 state_sizes = list(state_sizes)
