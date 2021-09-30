@@ -18,7 +18,7 @@ In-Band Network Telemetry (INT)  is specified by the P4 language community and c
 through network devices where INT functionality is enabled, essentially adding probing functionality to potentially every packet, including customer traffic. 
 This makes INT a very powerful debugging protocol, capable of measuring and recording the 'experience' of each tagged packet sent in the network.
 
-![INT workflow](docs/int-workflow.png)
+![INT workflow](../../docs/int-workflow.png)
 
 
 
@@ -125,7 +125,7 @@ Our INT virtual environment is composed by three bmv2 switches running within Mi
 Additionally, to each bmv2 switch is connected a link (linux veth) to linux bridge which gathers all INT reporting traffics. All INT reports are send to the INT collector which parse INT report header, INT headers and extract INT metadata for each passed switch.
 INT metadata are then stored in the INT Influx database independently deployed using https://github.com/GEANT-DataPlaneProgramming/In_band_telemetry_visualisation. 
 
-![INT infrastruture topology](docs/p4app-int-topology.png)
+![INT infrastruture topology](../../docs/p4app-int-topology.png)
 
 
 External connectivity
