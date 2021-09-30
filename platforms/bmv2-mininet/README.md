@@ -5,7 +5,7 @@ This is P4 implementation of the In-Band Network Telemetry (https://p4.org/specs
 The whole environment is provided basing on p4app solution (https://github.com/p4lang/p4app).
 
 The INT implementation and testing was done within the GEANT Data Plane Programmibilty activity:
-* https://wiki.geant.org/display/NETDEV/INT
+* https://wiki.geant.org/display/NETDEV/DPP
 
 All INT code (P4 INT, INT collector, additinal mininet utils) use Apache 2.0 licence.
 
@@ -38,7 +38,7 @@ Note: All INT implementation use 64-bit ingress and egress timestamps (instead o
 
 INT collector
 ----
-It is simple, pure Python based implemtation of the INT collector suitable for very low packet rate of monitored flows (on our hardware, we can generate no more that 2000 packets per second of total traffic within p4app virtual environment).
+This repository contains pure Python based implemtation of the INT collector suitable for very low packet rate of monitored flows (from mininet host we can generate no more that 2000 packets per second of total traffic).
 The implementation of the INT collector can be found at the following location: `int-platforms/platforms/bmv2-mininet/int.p4app/scripts/int_collector_influx.py`. The INT collector is started automatically by INT p4app.
 
 In order to configure desire InfluxDB destination for INT monitoring data please edit proper p4app manifest file (in example: `./int.p4app/int_v1.0.json`):
@@ -128,10 +128,13 @@ INT metadata are then stored in the INT Influx database independently deployed u
 ![INT infrastruture topology](docs/p4app-int-topology.png)
 
 
-Additionally, it possible to connect external network to the mininet network at bmv2 switch named `s2` (port 5) by manually creating docker macvlan network which should be called `macvlan_int_0`.
+External connectivity
+---------
+Additionally, it possible to connect external network to the mininet network at bmv2 switch named `s2` (external network is connected to port 5 of that switch) by manually creating docker macvlan network which should be called `macvlan_int_0`.
 `p4app` script is responsible for automatic detection of that network and connecting proper macvlan interface to the 'int' container. Macvlan interface is available as `eth1` within a running container. 
 Existance of `macvlan_int_0` is not mandatory to run and use INT p4app.
-From our experiance, it is easier to enable traffic leaving mininet to external network than succesfully enabling incoming traffic from external network to mininet.
+
+We have used that macvlan network to send packets with INT outside of the server (INT-enabled FGPA card). From our experiance, it is easier to enable traffic leaving mininet to external network than succesfully enabling incoming traffic from external network to mininet.
 Please check the example in which macvlan network `macvlan_int_0` is connected to the physical port`eth1`:
 
 ```
