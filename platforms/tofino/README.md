@@ -28,4 +28,18 @@ Installation
 Configuration
 -------------
 
-Coming soon.
+Several python scripts are provided to configure the tables that control the behavior of the INT P4 program, under `platfroms/tofino/config. These are run with:
+```
+bfshell -b [Absolute path]/[python script name]
+```
+
+e.g., `bfshell -b ~/int/tofino-commands/configure_source.py` to configure a node as INT source.
+Modify each script to customize them for your testbed.
+
+The following scripts are provided:
+- `activate_sink.py`: configures INT sink functionality on a certain port of the node.
+- `activate_source.py`: configures the node to add INT headers to certain packets.
+- `configure_port_forward.py`: cross-wires specified ports, used in lieu of actual switching logic.
+- `configure_sink.py`: sets L2/L3 parameters for INT reports.
+- `configure_source.py`: specifies rules about which non-INT packets must be augmented with INT headers.
+- `configure_transit_intF.py`: activates INT transit functionality (needed also on source and sink nodes).
