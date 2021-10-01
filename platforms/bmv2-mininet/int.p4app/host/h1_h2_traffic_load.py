@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
-# Copyright 2013-present Barefoot Networks, Inc.
+# Copyright 2020-2021 PSNC
+# Author: Damian Parniewicz
+#
+# Created in the GN4-3 project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +15,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
+# limitations under the License
 
 from scapy.all import Ether, IP, sendp, get_if_hwaddr, get_if_list, TCP, Raw, UDP
 from scapy.config import conf
