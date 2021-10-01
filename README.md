@@ -35,8 +35,8 @@ Note: All INT implementation use 64-bit ingress and egress timestamps (instead o
 Supported dataplane programmable platforms
 -----
 This repository contains P4 code compatible with bmv2-mininet and Tofino (see `./p4src`) as well as other software specific for particular platform:
-- `platforms/bmv2-mininet/` - p4app tool to run INT code within mininet-bmv2 network topology; for more details please check [INT bmv2-mininet documentation](platforms/bmv2-mininet/README.md)
-- `platforms/tofino/` - additional helper scripts to run and configure INT node deployed using Tofino-switch ([INT Tofino documentation](platforms/tofino/README.md))
+- [bmv2-mininet](platforms/bmv2-mininet/README.md) - p4app tool to run INT code within mininet-bmv2 network topology located in `platforms/bmv2-mininet/`
+- [Tofino](platforms/tofino/README.md) - additional helper scripts located in `platforms/tofino/` to run and configure INT node deployed using Tofino-switch 
 
 
 Other useful INT software components
