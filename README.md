@@ -38,6 +38,7 @@ This repository contains P4 code compatible with bmv2-mininet and Tofino (see `.
 - [bmv2-mininet](platforms/bmv2-mininet/README.md) - p4app tool to run INT code within mininet-bmv2 network topology located in `platforms/bmv2-mininet/`
 - [Tofino](platforms/tofino/README.md) - additional helper scripts located in `platforms/tofino/` to run and configure INT node deployed using Tofino-switch 
 
+Please use links above for detailed documentation how to run and configure INT P4 code for those platforms (these are readme suppages).
 
 Other useful INT software components
 ----
