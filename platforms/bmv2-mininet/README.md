@@ -160,6 +160,7 @@ and configure for bmv2 nodes proper switching of packets towards this IP using c
 - https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/master/platforms/bmv2-mininet/int.p4app/commands/commands2.txt table_add tb_forward send_to_port dst_mac&&&0xFFFFFFFF => 5 0,  where dst_mac is your Gateway dst_mac
 
 In a nutshell the h1_cesnet_udp_flow.py sends packets from the H1 of the aforementioned topology through S1->S2->CESNET_SINK.
+
 Configuration
 -----
 
