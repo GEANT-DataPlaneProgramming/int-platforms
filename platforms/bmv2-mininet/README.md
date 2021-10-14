@@ -146,14 +146,20 @@ sudo docker network create -d macvlan \
     -o parent=eth1 macvlan_int_0
 
 ```
+ The parent interface must correspond to interface that your public IP address is assigned.
  
  If you want connect more external network please check `p4app` bash script. If you want change to which bmv2 switch external network is connected to please look at `topo.py`.
 
 Be aware that for sending packets with INT to an IP address of external network (outside of the server with p4app) you need to modify dst IP address within packet generator script, e.g.:
 - https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/master/platforms/bmv2-mininet/int.p4app/host/h1_cesnet_udp_flow.py#L26
+- in the former script the src_ip and dst_mac needs to be changed to your public IP address and the dst_mac of your gateway (the src_mac that was used correspond also to the mac address of the interface with the public IP address but it seems that it does not play any role).
 
 and configure for bmv2 nodes proper switching of packets towards this IP using configuration instructions:
 - https://github.com/GEANT-DataPlaneProgramming/int-platforms/tree/master/platforms/bmv2-mininet/int.p4app/commands
+- https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/master/platforms/bmv2-mininet/int.p4app/commands/commands1.txt add table_add tb_forward send_to_port dst_mac&&&0xFFFFFFFF => 2 0, where dst_mac is your Gateway dst_mac
+- https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/master/platforms/bmv2-mininet/int.p4app/commands/commands2.txt table_add tb_forward send_to_port dst_mac&&&0xFFFFFFFF => 5 0,  where dst_mac is your Gateway dst_mac
+
+In a nutshell the h1_cesnet_udp_flow.py sends packets from the H1 of the aforementioned topology through S1->S2->CESNET_SINK.
 
 Configuration
 -----
