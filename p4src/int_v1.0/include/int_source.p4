@@ -72,9 +72,6 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
             meta.layer34_metadata.l4_dst: ternary;
         }
         size = 127;
-    // DAMU: I need time to write control plane programs
-        default_action =
-            configure_source(4,10,8, 0xFF);
     }
 
 
