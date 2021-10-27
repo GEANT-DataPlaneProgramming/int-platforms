@@ -172,6 +172,8 @@ struct int_metadata_t {
 #elif TOFINO
 // in the header of tofino, the metadata should be a multiple of 8 bits.
 header int_metadata_t {
+    bit<8> mirror_type; //at the top to act as common header
+    @flexible MirrorId_t session_ID;
     bit<4>  source;    // is INT source functionality enabled
     bit<4>  sink;        // is INT sink functionality enabled
     bit<32> switch_id;  // INT switch id is configured by network controller
@@ -181,10 +183,10 @@ header int_metadata_t {
     bit<16> sink_reporting_port;    // on which port INT reports must be send to INT collector
     bit<48> ingress_tstamp;   // pass ingress timestamp from Ingress pipeline to Egress pipeline
     bit<16> ingress_port;  // pass ingress port from Ingress pipeline to Egress pipeline
-    bit<8>  instance_type;
-    @flexible MirrorId_t session_ID;
-    bit<8>  mirror_type;
+/*    bit<8> instance_type;*/
 }
+
+// Header needed to discern packet type - regular or mirrored clone - in the egress deparser
 header mirror_h{
     bit<8> mirror_type;
 }

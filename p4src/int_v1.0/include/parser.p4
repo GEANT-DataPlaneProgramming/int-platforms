@@ -35,6 +35,8 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
     state start {
         packet.extract(standard_metadata);
         packet.advance(PORT_METADATA_SIZE);
+        meta.int_metadata.mirror_type = 0;
+        meta.int_metadata.session_ID = 1;
         meta.int_metadata.source = 0;
         meta.int_metadata.sink = 0;
         meta.int_metadata.switch_id = 0;
@@ -44,10 +46,7 @@ parser IngressParser(packet_in packet, out headers hdr, out metadata meta, out i
         meta.int_metadata.sink_reporting_port = 0;
         /*meta.int_metadata.ingress_tstamp = 0;*/
         meta.int_metadata.ingress_port = 0;
-        meta.int_metadata.instance_type = 0;
-        // Better not to touch session_ID = 0 
-        meta.int_metadata.session_ID = 1;
-        meta.int_metadata.mirror_type = 0;
+/*        meta.int_metadata.instance_type = 0;*/
         meta.layer34_metadata.ip_src = 0;
         meta.layer34_metadata.ip_dst = 0;
         meta.layer34_metadata.ip_ver = 0;
@@ -251,6 +250,8 @@ parser EgressParser(packet_in        pkt,
     state start {
         pkt.extract(eg_intr_md);
         /* We reinitialize these to silence a compiler warning... */
+        meta.int_metadata.mirror_type = 0;
+        meta.int_metadata.session_ID = 1;
         meta.int_metadata.source = 0;
         meta.int_metadata.sink = 0;
         meta.int_metadata.switch_id = 0;
@@ -260,9 +261,6 @@ parser EgressParser(packet_in        pkt,
         meta.int_metadata.sink_reporting_port = 0;
         meta.int_metadata.ingress_tstamp = 0;
         meta.int_metadata.ingress_port = 0;
-        meta.int_metadata.instance_type = 0;
-        meta.int_metadata.session_ID = 1;
-        meta.int_metadata.mirror_type = 0;
         meta.layer34_metadata.ip_src = 0;
         meta.layer34_metadata.ip_dst = 0;
         meta.layer34_metadata.ip_ver = 0;
@@ -272,17 +270,18 @@ parser EgressParser(packet_in        pkt,
         meta.layer34_metadata.l3_mtu = 0;
         meta.layer34_metadata.dscp = 0;
         meta.int_len_bytes = 0;
-        /*
-        transition parse_metadata;
+
+        mirror_h mirror_md= pkt.lookahead<mirror_h>();
+        transition select(mirror_md.mirror_type) {
+            0: parse_bridge;
+            1: parse_mirror;
+        default: accept;
+        }
     }
 
-    state parse_metadata{
-    */
-        pkt.extract(meta.int_metadata); // Overwrites the above
-	    transition select(meta.int_metadata.mirror_type) {
-            0: parse_ethernet;
-            1: parse_mirror;
-        }
+    state parse_bridge{
+        pkt.extract(meta.int_metadata);
+        transition parse_ethernet;
     }
 
     state parse_mirror{
@@ -294,8 +293,7 @@ parser EgressParser(packet_in        pkt,
         pkt.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             16w0x800: parse_ipv4;
-            default: reject; /*Debug
-            default: accept; */
+            default: accept;
         }
     }
 
@@ -552,12 +550,12 @@ control IngressDeparser(packet_out packet,
             );
         }
 
+        // Send the mirror of hdr to collector
+        if (meta.mirror_md.mirror_type == 1) {
+            mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.mirror_md.mirror_type});
+        }
         // bridge header
         packet.emit(meta.int_metadata);
-        // Send the mirror of hdr to collector
-        if (meta.int_metadata.mirror_type == 1) {
-            mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.int_metadata.mirror_type});
-        }
         
         // original headers
         packet.emit(hdr.ethernet);

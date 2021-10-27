@@ -33,9 +33,8 @@ control Int_sink_config(inout headers hdr, inout metadata meta, inout ingress_in
 #ifdef BMV2
         clone3<metadata>(CloneType.I2E, INT_REPORT_MIRROR_SESSION_ID, meta);
 #elif TOFINO
-        meta.int_metadata.instance_type = PKT_INSTANCE_TYPE_INGRESS_CLONE; 
         // To use mirror
-        meta.int_metadata.mirror_type = 1;
+        meta.mirror_md.mirror_type = 1;
         meta.int_metadata.session_ID = (bit<10>)INT_REPORT_MIRROR_SESSION_ID;
 #endif
     }
