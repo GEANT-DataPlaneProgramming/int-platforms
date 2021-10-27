@@ -126,9 +126,6 @@ control DeparserImpl(packet_out packet, in headers hdr) {
         packet.emit(hdr.report_udp);
         packet.emit(hdr.report_fixed_header);
         
-        // Bridge metadata at ingress to egress
-        // packet.emit(meta.int_metadata);
-        
         // original headers
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
@@ -253,6 +250,7 @@ parser EgressParser(packet_in        pkt,
     /* This is a mandatory state, required by Tofino Architecture */
     state start {
         pkt.extract(eg_intr_md);
+        /* We reinitialize these to silence a compiler warning... */
         meta.int_metadata.source = 0;
         meta.int_metadata.sink = 0;
         meta.int_metadata.switch_id = 0;
@@ -274,33 +272,30 @@ parser EgressParser(packet_in        pkt,
         meta.layer34_metadata.l3_mtu = 0;
         meta.layer34_metadata.dscp = 0;
         meta.int_len_bytes = 0;
+        /*
         transition parse_metadata;
     }
 
     state parse_metadata{
-	    mirror_h mirror_md= pkt.lookahead<mirror_h>();
-	    transition select(mirror_md.mirror_type) {
-            	0: parse_bridge;
-            	1: parse_mirror;
-            	default: accept;
-            }
-    }
-
-    state parse_bridge{
-            pkt.extract(meta.int_metadata);
-            transition parse_ethernet;
+    */
+        pkt.extract(meta.int_metadata); // Overwrites the above
+	    transition select(meta.int_metadata.mirror_type) {
+            0: parse_ethernet;
+            1: parse_mirror;
+        }
     }
 
     state parse_mirror{
-            pkt.extract(meta.mirror_md);
-            transition parse_ethernet;
+        pkt.extract(meta.mirror_md);
+        transition parse_ethernet;
     }
 
     state parse_ethernet {
         pkt.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
             16w0x800: parse_ipv4;
-            default: accept;
+            default: reject; /*Debug
+            default: accept; */
         }
     }
 
@@ -311,16 +306,16 @@ parser EgressParser(packet_in        pkt,
         meta.layer34_metadata.ip_ver = 8w4;
         meta.layer34_metadata.dscp = hdr.ipv4.dscp;
 
-#ifdef TOFINO
         ipv4_checksum.add(hdr.ipv4);
         /*// Output of verify is 0 or 1*/
         /*// If it is 1, there is checksum error*/
         ipv4_checksum.verify();
-#endif
+
         transition select(hdr.ipv4.protocol) {
             8w0x11: parse_udp;
             8w0x6: parse_tcp;
-            default: accept;
+            default: reject; /*Debug
+            default: accept; */
         }
     }
 
@@ -353,6 +348,7 @@ parser EgressParser(packet_in        pkt,
         /*verify(hdr.int_header.ver == INT_VERSION, error.INTVersionNotSupported);*/
 
         transition select(hdr.int_shim.len) {
+            (8w0x03): accept; //shim and int headers only, after ingress source activation
             (8w0x04): parse_int_data_32;
             (8w0x05): parse_int_data_64;
             (8w0x06): parse_int_data_96;
@@ -377,7 +373,6 @@ parser EgressParser(packet_in        pkt,
             (8w0x23): parse_int_data_1024;
             (8w0x27): parse_int_data_1152;
             (8w0x2b): parse_int_data_1280;
-            //default: accept; // Fede: do we even want to accept non-standard sizes
         }
     }
     // Automatically generated data parsing states
@@ -556,13 +551,13 @@ control IngressDeparser(packet_out packet,
                 }
             );
         }
-        
+
+        // bridge header
+        packet.emit(meta.int_metadata);
         // Send the mirror of hdr to collector
         if (meta.int_metadata.mirror_type == 1) {
             mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.int_metadata.mirror_type});
         }
-        // bridge header
-        packet.emit(meta.int_metadata);
         
         // original headers
         packet.emit(hdr.ethernet);
@@ -573,7 +568,8 @@ control IngressDeparser(packet_out packet,
         // INT headers
         packet.emit(hdr.int_shim);
         packet.emit(hdr.int_header);
-        
+
+        /* Fede: these will never be valid in the Ingress pipeline
         // local INT node metadata
         packet.emit(hdr.int_switch_id);
         packet.emit(hdr.int_port_ids);
@@ -583,6 +579,8 @@ control IngressDeparser(packet_out packet,
         packet.emit(hdr.int_egress_tstamp);
         packet.emit(hdr.int_level2_port_ids);
         packet.emit(hdr.int_egress_port_tx_util);
+        */
+
     }
 }
 
@@ -638,7 +636,6 @@ control EgressDeparser(packet_out packet,
                 }
             );
         }
-        
         
         // report headers
         packet.emit(hdr.report_ethernet);
