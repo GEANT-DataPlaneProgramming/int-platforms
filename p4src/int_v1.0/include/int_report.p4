@@ -24,6 +24,8 @@
 // register to store seq_num
 #ifdef BMV2
 register<bit<32>> (1) report_seq_num_register;
+
+control Int_report(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
 #elif TOFINO
 Register<data_t, data_t>(1) report_seq_num_register;
 RegisterAction<data_t, data_t, data_t>(report_seq_num_register)
@@ -34,17 +36,12 @@ RegisterAction<data_t, data_t, data_t>(report_seq_num_register)
         }
     };
 
-#endif
-
-#ifdef BMV2
-    control Int_report(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
-#elif TOFINO
-    control Int_report(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
+control Int_report(inout headers hdr, inout metadata meta, in egress_intrinsic_metadata_t standard_metadata, in egress_intrinsic_metadata_from_parser_t imp) {
 #endif
 
         bit<32> seq_num_value = 0;
 
-        // INT Raport structure
+        // INT Report structure
         // [Eth][IP][UDP][INT RAPORT HDR][ETH][IP][UDP/TCP][INT SHIM][INT DATA]
 
         action send_report(bit<48> dp_mac, bit<32> dp_ip, bit<48> collector_mac, bit<32> collector_ip, bit<16> collector_port) {
@@ -77,12 +74,13 @@ RegisterAction<data_t, data_t, data_t>(report_seq_num_register)
                 hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
             }
 #elif TOFINO
-            hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14 + 16)
-                // + (((bit<16>)hdr.int_shim.len) << 2);
-				+ 92; //TODO@FEDE: hardcoded value
-            // if (hdr.udp.isValid()) {
+		    // Tofino will only support UDP traffic for now
+            // 20 + 20 + 8 + 14 + 16 = 78; UDP: + 8; INT header: +12
+            hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14 + 16 + 8 + 12 + meta.int_len_bytes);
+
+            /*if (hdr.udp.isValid()) {
                 hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
-			// }
+			}*/
 #endif
             hdr.report_ipv4.id = 0;
             hdr.report_ipv4.flags = 0;
@@ -96,7 +94,11 @@ RegisterAction<data_t, data_t, data_t>(report_seq_num_register)
             hdr.report_udp.setValid();
             hdr.report_udp.srcPort = 0;
             hdr.report_udp.dstPort = collector_port;
+#ifdef BMV2
             hdr.report_udp.len = hdr.report_ipv4.totalLen - 20;
+#elif TOFINO
+            hdr.report_udp.len = (bit<16>)(20 + 8 + 14 + 16 + 8 + 12 + meta.int_len_bytes);
+#endif
 
             // INT report fixed header ************************************************/
             // INT report version 1.0
@@ -132,7 +134,7 @@ RegisterAction<data_t, data_t, data_t>(report_seq_num_register)
 #ifdef BMV2
             truncate((bit<32>)hdr.report_ipv4.totalLen + 14);
 #elif TOFINO
-            // Not supported
+            // Not supported - leave extra data as Eth trail, will be truncated by the next switch/router in the path
 #endif
             }
             table tb_int_reporting {
