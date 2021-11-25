@@ -10,7 +10,7 @@ import io
 from influxdb import InfluxDBClient
 
 log_format = "[%(asctime)s] [%(levelname)s] - %(message)s"
-logging.basicConfig(level=logging.INFO, format=log_format, filename="/tmp/p4app_logs/int_collector.log")
+logging.basicConfig(level=logging.ERROR, format=log_format, filename="/tmp/p4app_logs/int_collector.log")
 logger = logging.getLogger('int_collector')
 
 
@@ -252,7 +252,7 @@ class IntReport():
             logger.error("Unsupported INT version %s - skipping report" % self.int_version)
             raise Exception("Unsupported INT version %s - skipping report" % self.int_version)
 
-        self.ins_map = int.from_bytes(self.int_hdr[4:6], byteorder='big') 
+        self.ins_map = int.from_bytes(self.int_hdr[4:6], byteorder='little') 
 
         # int metadata
         self.int_meta = data[offset + 12:]
