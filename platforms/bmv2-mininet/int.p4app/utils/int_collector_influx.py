@@ -252,7 +252,12 @@ class IntReport():
             logger.error("Unsupported INT version %s - skipping report" % self.int_version)
             raise Exception("Unsupported INT version %s - skipping report" % self.int_version)
 
-        self.ins_map = int.from_bytes(self.int_hdr[4:6], byteorder='little') 
+        self.ins_map = int.from_bytes(self.int_hdr[4:6], byteorder='big')
+        first_slice = (self.ins_map & 0b0000111100000000) << 4
+        second_slice = (self.ins_map & 0b1111000000000000) >> 4
+        self.ins_map = (first_slice + second_slice) >> 8
+        
+        logger.debug(hex(self.ins_map))
 
         # int metadata
         self.int_meta = data[offset + 12:]
