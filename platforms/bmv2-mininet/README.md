@@ -169,6 +169,9 @@ In order to read how to configure INT functionality for each switch please read:
 Usage
 -----
 
+At the beginning change your influx user and password in this [file](https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/3c9db738859aa2ec6ae32fd511a90275c1ff72e9/platforms/bmv2-mininet/int.p4app/utils/int_collector_influx.py#L433)
+
+
 In order to run specific version of P4 INT code please use proper bootstrap script:
 
 ```
