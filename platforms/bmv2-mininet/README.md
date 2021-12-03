@@ -238,6 +238,8 @@ See p4dbg commands: https://github.com/p4lang/behavioral-model/blob/main/docs/p4
 
 The resulted logs and pcap files are stored in `/tmp/p4app_logs` within a docker container, which are shared volumes with 
 
+___If you have problems sending reports to influx please see this [issue](https://github.com/GEANT-DataPlaneProgramming/int-platforms/issues/5)___
+
 
 INT traffic visualisation
 ------
