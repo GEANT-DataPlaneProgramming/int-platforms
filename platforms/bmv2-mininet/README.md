@@ -164,13 +164,13 @@ In a nutshell the h1_cesnet_udp_flow.py sends packets from the H1 of the aforeme
 Configuration
 -----
 
-In order to read how to configure INT functionality for each switch please read: https://github.com/GEANT-DataPlaneProgramming/In_band_telemetry_bmv2/blob/master/docs/configuration.md
+In order to read how to configure INT functionality for each switch please read: https://github.com/GEANT-DataPlaneProgramming/In_band_telemetry_bmv2/blob/master/docs/configuration.md.
 
 Usage
 -----
 
-At the beginning change your influx user and password in this [file](https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/3c9db738859aa2ec6ae32fd511a90275c1ff72e9/platforms/bmv2-mininet/int.p4app/utils/int_collector_influx.py#L433)
-
+At the beginning change your influx user and password in this [file](https://github.com/GEANT-DataPlaneProgramming/int-platforms/blob/3c9db738859aa2ec6ae32fd511a90275c1ff72e9/platforms/bmv2-mininet/int.p4app/utils/int_collector_influx.py#L433).
+Unless you don't want to collect data, you don't have to do this.
 
 In order to run specific version of P4 INT code please use proper bootstrap script:
 
