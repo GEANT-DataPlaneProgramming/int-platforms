@@ -4,7 +4,7 @@ table_add tb_int_source configure_source 150.254.169.196&&&0xFFFFFFFF 195.113.17
 
 table_add tb_int_sink configure_sink 1 => 4
 mirroring_add 1 4
-table_add tb_int_reporting send_report => f6:61:c0:6a:00:00  10.0.1.1  f6:61:c0:6a:14:21  10.0.0.254  6000
+table_add tb_int_reporting send_report => f6:61:c0:6a:00:00  10.0.0.1  f6:61:c0:6a:14:21  10.0.0.254  6000
 
 table_add tb_int_transit configure_transit => 1 1500
 table_add tb_forward send_to_port 00:10:db:ff:10:02&&&0xFFFFFFFF => 2 0
