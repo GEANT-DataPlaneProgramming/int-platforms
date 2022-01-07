@@ -118,7 +118,6 @@ control Int_sink(inout headers hdr, inout metadata meta, in egress_intrinsic_met
             Int_report.apply(hdr, meta, standard_metadata);
         }
 #elif TOFINO
-        // if (meta.int_metadata.remove_int == 1) {
         if (meta.int_metadata.remove_int == 1 && !meta.mirror_md.isValid()) {
             // remove INT headers from a frame
             remove_sink_header();

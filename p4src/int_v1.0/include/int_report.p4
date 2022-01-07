@@ -75,8 +75,8 @@ control Int_report(inout headers hdr, inout metadata meta, in egress_intrinsic_m
             }
 #elif TOFINO
 		    // Tofino will only support UDP traffic for now
-            // 20 + 20 + 8 + 14 + 16 = 78; UDP: + 8; INT header: +12
-            hdr.report_ipv4.totalLen = (bit<16>)(20 + 20 + 8 + 14 + 16 + 8 + 12 + meta.int_len_bytes);
+            // 20 + 8 + 14 + 20 + 8 + 16 = 78; UDP: second 8;
+            hdr.report_ipv4.totalLen = (bit<16>)(20 + 8 + 14 + 20 + 8 + 16 + meta.int_len_bytes);
 
             /*if (hdr.udp.isValid()) {
                 hdr.report_ipv4.totalLen = hdr.report_ipv4.totalLen + 8;
@@ -97,7 +97,7 @@ control Int_report(inout headers hdr, inout metadata meta, in egress_intrinsic_m
 #ifdef BMV2
             hdr.report_udp.len = hdr.report_ipv4.totalLen - 20;
 #elif TOFINO
-            hdr.report_udp.len = (bit<16>)(20 + 8 + 14 + 16 + 8 + 12 + meta.int_len_bytes);
+            hdr.report_udp.len = (bit<16>)(8 + 14 + 20 + 8 + 16 + meta.int_len_bytes);
 #endif
 
             // INT report fixed header ************************************************/
