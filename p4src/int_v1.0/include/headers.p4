@@ -189,6 +189,7 @@ header int_metadata_t {
 // Header needed to discern packet type - regular or mirrored clone - in the egress deparser
 header mirror_h{
     bit<8> mirror_type;
+    bit<48> ingress_tstamp; 
 }
 #endif
 

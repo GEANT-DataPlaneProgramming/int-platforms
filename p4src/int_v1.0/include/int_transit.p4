@@ -90,11 +90,7 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             bit<64> _timestamp = (bit<64>)meta.int_metadata.ingress_tstamp;  
             hdr.int_ingress_tstamp.ingress_tstamp = hdr.int_ingress_tstamp.ingress_tstamp + 1000 * _timestamp;
 #elif TOFINO
-// Not OK
-           /* hdr.int_ingress_tstamp.ingress_tstamp[63:32] = meta.h_time;*/
-            /*hdr.int_ingress_tstamp.ingress_tstamp[31:16] = meta.l_time[31:16];*/
-            /*hdr.int_ingress_tstamp.ingress_tstamp[15:0] = imp.global_tstamp[15:0];*/
-        hdr.int_ingress_tstamp.ingress_tstamp = (bit<64>)meta.int_metadata.ingress_tstamp;
+            hdr.int_ingress_tstamp.ingress_tstamp = (bit<64>)meta.int_metadata.ingress_tstamp;
 #endif
         }
         action int_set_header_5() {
@@ -103,10 +99,6 @@ control Int_transit(inout headers hdr, inout metadata meta, inout standard_metad
             bit<64> _timestamp = (bit<64>)standard_metadata.egress_global_timestamp;
             hdr.int_egress_tstamp.egress_tstamp = hdr.int_egress_tstamp.egress_tstamp + 1000 * _timestamp;
 #elif TOFINO
-// Not OK
-            /*hdr.int_egress_tstamp.egress_tstamp[63:32] = meta.h_time;*/
-            /*hdr.int_egress_tstamp.egress_tstamp[31:16] = meta.l_time[31:16];*/
-            /*hdr.int_egress_tstamp.egress_tstamp[15:0] = imp.global_tstamp[15:0];*/
             hdr.int_egress_tstamp.egress_tstamp = (bit<64>)imp.global_tstamp;
 #endif
         }
