@@ -287,6 +287,7 @@ parser EgressParser(packet_in        pkt,
     state parse_mirror{
         pkt.extract(meta.mirror_md);
         meta.int_metadata.ingress_tstamp = meta.mirror_md.ingress_tstamp;
+        meta.int_metadata.ingress_port = meta.mirror_md.ingress_port;
         transition parse_ethernet;
     }
 
@@ -553,7 +554,7 @@ control IngressDeparser(packet_out packet,
 
         // Send the mirror of hdr to collector
         if (meta.mirror_md.mirror_type == 1) {
-            mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.mirror_md.mirror_type, meta.int_metadata.ingress_tstamp});
+            mirror.emit<mirror_h>(meta.int_metadata.session_ID, {meta.mirror_md.mirror_type, meta.int_metadata.ingress_tstamp, meta.int_metadata.ingress_port});
         }
         // bridge header
         packet.emit(meta.int_metadata);
