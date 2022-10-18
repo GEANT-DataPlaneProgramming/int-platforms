@@ -19,6 +19,20 @@
  * limitations under the License.
  */
 
+// register to store seq
+#ifdef BMV2
+register<bit<8>> (1) hdr_seq_num_register;
+#elif TOFINO
+Register<bit<8>, bit<8>>(1) hdr_seq_num_register;
+RegisterAction<bit<8>, bit<8>, bit<8>>(hdr_seq_num_register)
+    update_hdr_seq_num = {
+        void apply(inout bit<8> value, out bit<8> result) {
+            result = value;
+            value = value + 1;
+        }
+    };
+#endif
+
 #ifdef BMV2
 
 control Int_source(inout headers hdr, inout metadata meta, inout standard_metadata_t standard_metadata) {
@@ -49,7 +63,14 @@ control Int_source(inout headers hdr, inout metadata meta, in ingress_intrinsic_
         hdr.int_header.hop_metadata_len = hop_metadata_len;
         hdr.int_header.remaining_hop_cnt = max_hop;  //will be decreased immediately by 1 within transit process
         hdr.int_header.instruction_mask = ins_mask;
-        
+
+#ifdef BMV2
+        hdr_seq_num_register.read(hdr.int_header.seq, 0);
+        hdr_seq_num_register.write(0, hdr.int_header.seq + 1);
+#elif TOFINO
+        hdr.int_header.seq = update_hdr_seq_num.execute(0);
+#endif
+
         hdr.int_shim.dscp = hdr.ipv4.dscp;
         
         hdr.ipv4.dscp = IPv4_DSCP_INT;   // indicates that INT header in the packet
