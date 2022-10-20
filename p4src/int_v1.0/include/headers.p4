@@ -97,8 +97,7 @@ header int_header_t {
     bit<5>  hop_metadata_len;   // the length of the metadata added by a single INT node (4-byte words)
     bit<8>  remaining_hop_cnt;  // how many switches can still add INT metadata
     bit<16> instruction_mask;
-    bit<8> seq;
-    bit<8> rsvd3;
+    bit<16> seq;  // rsvd3 - custom implementation of a sequence number
 }
 
 const bit<16> INT_ALL_HEADER_LEN_BYTES = INT_SHIM_HEADER_LEN_BYTES + INT_HEADER_LEN_BYTES;

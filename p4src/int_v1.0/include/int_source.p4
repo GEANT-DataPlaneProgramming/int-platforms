@@ -21,12 +21,12 @@
 
 // register to store seq
 #ifdef BMV2
-register<bit<8>> (1) hdr_seq_num_register;
+register<bit<16>> (1) hdr_seq_num_register;
 #elif TOFINO
-Register<bit<8>, bit<8>>(1) hdr_seq_num_register;
-RegisterAction<bit<8>, bit<8>, bit<8>>(hdr_seq_num_register)
+Register<bit<16>, bit<16>>(1) hdr_seq_num_register;
+RegisterAction<bit<16>, bit<16>, bit<16>>(hdr_seq_num_register)
     update_hdr_seq_num = {
-        void apply(inout bit<8> value, out bit<8> result) {
+        void apply(inout bit<16> value, out bit<16> result) {
             result = value;
             value = value + 1;
         }
